@@ -23,17 +23,17 @@ import {
 import MessageComposer from "./MessageComposer";
 import RecipientSelector from "./RecipientSelector";
 import AnalyticsDashboard from "./AnalyticsDashboard";
-import { Link, router, useForm } from "@inertiajs/react";
-
+import { Link, router, useForm, usePage } from "@inertiajs/react";
+import { toast } from "react-toastify";
 import { useRecipientStore } from "./RecipientSelector";
 
 import { useMessageStore } from "./MessageComposer";
 
-const Home = (tabActive = "compose") => {
+const Home = ({ tabActive = "compose", templates }) => {
     const [activeTab, setActiveTab] = useState(tabActive);
     const { recipients } = useRecipientStore();
 
-    const { message } = useMessageStore();
+    const { message, template_ } = useMessageStore();
 
     const { data, setData, post, recentlySuccessful, errors } = useForm({
         recipients: recipients,
@@ -41,10 +41,40 @@ const Home = (tabActive = "compose") => {
     });
 
     useEffect(() => {
-        console.log(recipients, message);
+        //console.log(recipients, message, "template:", template);
+        //console.log("template:", template);
         setData("message", message);
         setData("recipients", recipients);
     }, [recipients, message]);
+
+    const { flash } = usePage().props;
+
+    const enhanced_toast = (title, message, icon) => {
+        toast(
+            <div className="flex">
+                <div className="ml-4">
+                    <p className="font-bold">{title}</p>
+                    <p>{message}</p>
+                </div>
+            </div>,
+            {
+                position: "top-right",
+                autoClose: 5000,
+                hideProgressBar: false,
+                closeOnClick: true,
+                pauseOnHover: true,
+                draggable: true,
+                progress: undefined,
+                theme: "light",
+            }
+        );
+    };
+
+    useEffect(() => {
+        if (flash) {
+            window.alert_toast(flash.title, flash.message, flash.icon);
+        }
+    }, [flash]);
 
     const sendMessage = () => {
         post(route("admin.message.send"), {
@@ -250,6 +280,7 @@ const Home = (tabActive = "compose") => {
                                             onNext={() =>
                                                 setActiveTab("recipients")
                                             }
+                                            messagetemps={templates}
                                         />
                                     </TabsContent>
 
@@ -293,9 +324,15 @@ const Home = (tabActive = "compose") => {
                                                             type="radio"
                                                             id="schedule-later"
                                                             name="schedule"
+                                                            disabled
                                                         />
                                                         <label htmlFor="schedule-later">
                                                             Schedule for Later
+                                                            <small className=" text-black-50">
+                                                                {
+                                                                    " (On Development...)"
+                                                                }
+                                                            </small>
                                                         </label>
                                                     </div>
                                                     <div className="pt-4">
@@ -318,19 +355,26 @@ const Home = (tabActive = "compose") => {
                                                             <strong>
                                                                 Template:
                                                             </strong>{" "}
-                                                            Promotional Offer
+                                                            {template_}
                                                         </p>
                                                         <p>
                                                             <strong>
                                                                 Recipients:
                                                             </strong>{" "}
-                                                            245 contacts
+                                                            {recipients.length}{" "}
+                                                            contacts
                                                         </p>
                                                         <p>
                                                             <strong>
                                                                 Estimated Cost:
-                                                            </strong>{" "}
-                                                            $12.25
+                                                            </strong>
+                                                            {" ₱"}
+                                                            {recipients
+                                                                ? (
+                                                                      recipients.length *
+                                                                      2.5
+                                                                  ).toFixed(2)
+                                                                : 0}
                                                         </p>
                                                     </div>
                                                 </div>

@@ -43,6 +43,9 @@ import {
 } from "@/Components/frontend/ui/alert-dialog";
 import { Save, Send, Eye, Variable, AlertCircle } from "lucide-react";
 import { create } from "zustand";
+import { router, useForm, usePage } from "@inertiajs/react";
+import InputError from "@/Components/InputError";
+import { toast } from "react-toastify";
 // interface MessageComposerProps {
 //     onNext?: () => void;
 //     onSaveTemplate?: (template: { name: string; content: string }) => void;
@@ -50,36 +53,62 @@ import { create } from "zustand";
 
 export const useMessageStore = create((set) => ({
     message: "",
+    template_: "",
     setMessage: (message) => set({ message }),
+
+    setTemplate_: (template_) => set({ template_ }),
 }));
 
-const MessageComposer = ({ onNext = () => {}, onSaveTemplate = () => {} }) => {
-    const { message, setMessage } = useMessageStore();
-    const [selectedTemplate, setSelectedTemplate] = useState("");
+// export const useRecipientStore = create((set) => ({
+//     recipients: [],
+//     setRecipients: (recipients) => set({ recipients }),
+// }));
+
+const MessageComposer = ({
+    messagetemps,
+    onNext = () => {},
+    onSaveTemplate = () => {},
+}) => {
+    const { message, setMessage, template_, setTemplate_ } = useMessageStore();
+
+    useEffect(() => {
+        if (template_) {
+            console.log("templatex:", template_);
+        }
+    }, [template_]);
+
+    const [selectedTemplate, setSelectedTemplate] = useState(0);
+    ``;
     const [templateName, setTemplateName] = useState("");
     const [activeTab, setActiveTab] = useState("compose");
 
-    // Mock templates data
-    const templates = [
+    const templates_ = [
         {
-            id: "1",
-            name: "Service Reminder",
-            content:
-                "Hi {{name}}, your vehicle is due for service at AutoBlitz. Call us at (555) 123-4567 to schedule.",
-        },
-        {
-            id: "2",
-            name: "Special Promotion",
-            content:
-                "AutoBlitz exclusive: 20% off all services this week for valued customers like you, {{name}}! Book now.",
-        },
-        {
-            id: "3",
-            name: "Follow Up",
-            content:
-                "Thank you {{name}} for visiting AutoBlitz. How was your experience? Reply to share feedback.",
+            id: 0,
+            templatename: "Start from scratch",
+            content: "",
         },
     ];
+
+    const [templates, setTemplates] = useState(templates_);
+
+    useEffect(() => {
+        if (messagetemps) {
+            // messagetemps.forEach(e => {
+            //     setTemplate((prev) => )w
+            // });
+            setTemplates([
+                ...templates_,
+                ...messagetemps.map((e) => ({
+                    id: e.id,
+                    templatename: e.templatename,
+                    content: e.content,
+                })),
+            ]);
+        }
+    }, [messagetemps]);
+
+    // Mock templates data
 
     // Mock variables that can be inserted
     const variables = [
@@ -89,27 +118,90 @@ const MessageComposer = ({ onNext = () => {}, onSaveTemplate = () => {} }) => {
         { id: "advisor", label: "Service Advisor", placeholder: "{{advisor}}" },
     ];
 
+    const handleInsertVariable = (placeholder) => {
+        setMessage(`${message} ${placeholder}`);
+    };
+
+    const { flash } = usePage().props;
+
+    const { data, setData, post, processing, recentlySuccessful, errors } =
+        useForm({
+            template: "",
+            content: "",
+        });
     const handleTemplateChange = (value) => {
         setSelectedTemplate(value);
-        if (value === "start-from-scratch") {
-            setMessage("");
-            return;
+        // if (value === "start-from-scratch") {
+        //     setMessage("");
+
+        //     return;
+        // }
+        const template___ = templates.find((t) => t.id == value);
+        if (template___) {
+            setMessage(template___.content);
+
+            setTemplate_(template___.templatename);
         }
-        const template = templates.find((t) => t.id === value);
-        if (template) {
-            setMessage(template.content);
-        }
+
+        // console.log("templatezz:", template_);
     };
 
-    const handleInsertVariable = (placeholder) => {
-        setMessage((prev) => `${prev} ${placeholder}`);
+    const enhanced_toast = (title, message, icon) => {
+        toast(
+            <div className="flex">
+                <div className="ml-4">
+                    <p className="font-bold">{title}</p>
+                    <p>{message}</p>
+                </div>
+            </div>,
+            {
+                position: "top-right",
+                autoClose: 5000,
+                hideProgressBar: false,
+                closeOnClick: true,
+                pauseOnHover: true,
+                draggable: true,
+                progress: undefined,
+                theme: "light",
+            }
+        );
     };
+    const [SaveTemplateDialogOpen, setSaveTemplateDialogOpen] = useState(false);
 
-    const handleSaveTemplate = () => {
-        if (templateName && message) {
-            onSaveTemplate({ name: templateName, content: message });
-            setTemplateName("");
+    useEffect(() => {
+        if (templateName) setData("template", templateName);
+    }, [templateName]);
+    useEffect(() => {
+        if (message) {
+            setData("content", message);
         }
+    }, [message]);
+    useEffect(() => {
+        if (flash) {
+            alert_toast(flash.title, flash.message, flash.icon);
+        }
+    }, [flash]);
+
+    const handleSaveTemplate = (e) => {
+        e.preventDefault();
+
+        post(route("admin.template.save"), {
+            onSuccess: () => {
+                setSaveTemplateDialogOpen(false);
+            },
+            onError: (res) => {
+                console.log(res);
+            },
+            onFinish: () => {
+                router.reload({
+                    only: ["flash"],
+                });
+            },
+        });
+        // if (templateName && message) {
+        //     onSaveTemplate({ name: templateName, content: message });
+        //     setTemplateName("");
+        // }
     };
 
     const characterCount = message.length;
@@ -142,18 +234,15 @@ const MessageComposer = ({ onNext = () => {}, onSaveTemplate = () => {} }) => {
                                 onValueChange={handleTemplateChange}
                             >
                                 <SelectTrigger id="template">
-                                    <SelectValue placeholder="Choose a template or start from scratch" />
+                                    <SelectValue placeholder="Select a template" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="start-from-scratch">
-                                        Start from scratch
-                                    </SelectItem>
                                     {templates.map((template) => (
                                         <SelectItem
                                             key={template.id}
                                             value={template.id}
                                         >
-                                            {template.name}
+                                            {template.templatename}
                                         </SelectItem>
                                     ))}
                                 </SelectContent>
@@ -244,7 +333,10 @@ const MessageComposer = ({ onNext = () => {}, onSaveTemplate = () => {} }) => {
 
             <CardFooter className="flex justify-between">
                 <div className="flex space-x-2">
-                    <AlertDialog>
+                    <AlertDialog
+                        open={SaveTemplateDialogOpen}
+                        onOpenChange={(open) => setSaveTemplateDialogOpen(open)}
+                    >
                         <AlertDialogTrigger asChild>
                             <Button
                                 variant="outline"
@@ -268,14 +360,19 @@ const MessageComposer = ({ onNext = () => {}, onSaveTemplate = () => {} }) => {
                                 <Input
                                     placeholder="Template name"
                                     value={templateName}
-                                    onChange={(e) =>
-                                        setTemplateName(e.target.value)
-                                    }
+                                    onChange={(e) => {
+                                        //setData("template", e.target.value);
+                                        setTemplateName(e.target.value);
+                                    }}
                                 />
+                                <InputError message={errors.template} />
                             </div>
                             <AlertDialogFooter>
                                 <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                <AlertDialogAction onClick={handleSaveTemplate}>
+                                <AlertDialogAction
+                                    disabled={processing}
+                                    onClick={handleSaveTemplate}
+                                >
                                     Save
                                 </AlertDialogAction>
                             </AlertDialogFooter>
@@ -285,7 +382,7 @@ const MessageComposer = ({ onNext = () => {}, onSaveTemplate = () => {} }) => {
 
                 <Button
                     onClick={onNext}
-                    disabled={message.trim() === "" || isOverLimit}
+                    // disabled={message.trim() === "" || isOverLimit}
                     className="flex items-center"
                 >
                     <Send className="h-4 w-4 mr-2" />

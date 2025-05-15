@@ -1,10 +1,11 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import {
     Tabs,
     TabsContent,
     TabsList,
     TabsTrigger,
 } from "@/Components/frontend/ui/tabs";
+
 import {
     Card,
     CardContent,
@@ -27,10 +28,26 @@ import {
     UserCheck,
     UserPlus,
     X,
+    Save,
+    Trash,
 } from "lucide-react";
 import * as XLSX from "xlsx"; // Import the library
 
 import { create } from "zustand";
+import {
+    Table,
+    TableHeader,
+    TableBody,
+    TableFooter,
+    TableHead,
+    TableRow,
+    TableCell,
+    TableCaption,
+} from "@/Components/frontend/ui/table";
+
+import Modal from "@/Components/Modal";
+import { router, useForm } from "@inertiajs/react";
+import InputError from "@/Components/InputError";
 
 export const useRecipientStore = create((set) => ({
     recipients: [],
@@ -44,12 +61,98 @@ const RecipientSelector = ({
 }) => {
     const { recipients, setRecipients } = useRecipientStore();
 
+    const [selectedSegments, setSelectedSegments] = useState([]);
+    const [csvFile, setCsvFile] = useState(null);
+    const [activeTab, setActiveTab] = useState("segments");
+    const [dragActive, setDragActive] = useState(false);
+    const inputRef = useRef(null);
+
+    const [IsModalSaveContacts, setIsModalSaveContacts] = useState(false);
+
+    // Handle drag events
+    const handleDrag = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        if (e.type === "dragenter" || e.type === "dragover") {
+            setDragActive(true);
+        } else if (e.type === "dragleave") {
+            setDragActive(false);
+        }
+    };
+
+    // Handle file drop
+    const handleDrop = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setDragActive(false);
+
+        if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+            const file = e.dataTransfer.files[0];
+            if (validateFileType(file)) {
+                setCsvFile(file);
+                processFile(file);
+            }
+        }
+    };
+
+    // Handle file selection via browse
     const handleFileUpload = (e) => {
         const file = e.target.files[0];
         if (!file) return;
 
-        setCsvFile(file); // Store the file for UI display
+        if (validateFileType(file)) {
+            setCsvFile(file);
+            processFile(file);
+        }
+    };
 
+    // Validate file type
+    const validateFileType = (file) => {
+        const validTypes = [
+            "application/vnd.ms-excel",
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            "text/csv",
+            "application/csv",
+        ];
+
+        // Check by MIME type
+        if (validTypes.includes(file.type)) {
+            return true;
+        }
+
+        // Fallback check by extension
+        const fileExt = file.name.split(".").pop().toLowerCase();
+        if (["xls", "xlsx", "csv"].includes(fileExt)) {
+            return true;
+        }
+
+        alert("Please upload only Excel (.xls, .xlsx) or CSV files");
+        return false;
+    };
+
+    const [newcontacts, setNewContacts] = useState([]);
+
+    const {
+        data,
+        setData,
+        post,
+        recentlySuccessful,
+        processing,
+        errors,
+        clearErrors,
+    } = useForm({
+        contacts: [],
+    });
+
+    useEffect(() => {
+        if (newcontacts) {
+            console.log("new contacts:", newcontacts);
+            setData("contacts", newcontacts);
+        }
+    }, [newcontacts]);
+    // Process the uploaded file
+    const processFile = (file) => {
         const reader = new FileReader();
         reader.onload = (e) => {
             try {
@@ -89,17 +192,27 @@ const RecipientSelector = ({
                                 row.segment ||
                                 determineSegment(row) ||
                                 "Not Set",
+                            description: row.description,
                         };
                     })
                     .filter(Boolean); // Remove null entries
 
+                setNewContacts(formattedData);
                 setRecipients(formattedData);
+                clearErrors();
             } catch (error) {
                 console.error("Error parsing file:", error);
-                // Add user-facing error message here
+                alert(
+                    "Error processing file. Please check the format and try again."
+                );
             }
         };
         reader.readAsArrayBuffer(file);
+    };
+
+    // Trigger file input click
+    const onButtonClick = () => {
+        inputRef.current?.click();
     };
 
     // Helper function to determine segment
@@ -128,9 +241,9 @@ const RecipientSelector = ({
     //     console.log(recipients);
     // }, []);
 
-    const [selectedSegments, setSelectedSegments] = useState([]);
-    const [csvFile, setCsvFile] = useState(null); // Fixed useState declaration
-    const [activeTab, setActiveTab] = useState("import");
+    // const [selectedSegments, setSelectedSegments] = useState([]);
+    // const [csvFile, setCsvFile] = useState(null); // Fixed useState declaration
+    // const [activeTab, setActiveTab] = useState("import");
 
     const segments = [
         { id: "recent-service", label: "Recent Service Customers", count: 156 },
@@ -163,6 +276,25 @@ const RecipientSelector = ({
 
     const totalRecipients = recipients.length;
 
+    const saveDatabase = (e) => {
+        e.preventDefault();
+
+        post(route("admin.contacts.add"), {
+            onFinish: () => {
+                setCsvFile(null);
+                setRecipients([]);
+                setNewContacts([]);
+                router.reload({
+                    only: ["flash"],
+                });
+            },
+            onError: (xx) => {
+                console.log("error: ", errors);
+                console.log("error: ", xx);
+            },
+        });
+    };
+
     return (
         <div className="w-full max-w-5xl mx-auto bg-white p-6 rounded-lg shadow-sm">
             <CardHeader className="px-0">
@@ -182,60 +314,66 @@ const RecipientSelector = ({
             >
                 <TabsList className="grid w-full grid-cols-2">
                     <TabsTrigger
-                        value="import"
-                        className="flex items-center gap-2"
-                    >
-                        <Upload size={16} />
-                        Import Contacts
-                    </TabsTrigger>
-                    <TabsTrigger
                         value="segments"
                         className="flex items-center gap-2"
                     >
                         <Users size={16} />
                         Select Segments
                     </TabsTrigger>
+                    <TabsTrigger
+                        value="import"
+                        className="flex items-center gap-2"
+                    >
+                        <Upload size={16} />
+                        Import Contacts
+                    </TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="import" className="mt-4">
                     <Card>
                         <CardContent className="pt-6">
-                            <div className="flex flex-col items-center justify-center p-8 border-2 border-dashed border-gray-300 rounded-lg bg-gray-50">
+                            <div
+                                className={`flex flex-col items-center justify-center p-8 border-2 border-dashed rounded-lg ${
+                                    dragActive
+                                        ? "border-blue-500 bg-blue-50"
+                                        : "border-gray-300 bg-gray-50"
+                                }`}
+                                onDragEnter={handleDrag}
+                                onDragLeave={handleDrag}
+                                onDragOver={handleDrag}
+                                onDrop={handleDrop}
+                            >
                                 <Upload className="h-10 w-10 text-gray-400 mb-4" />
                                 <p className="mb-2 text-sm text-gray-600">
-                                    Drag and drop a CSV file or click to browse
+                                    Drag and drop an Excel/CSV file or click to
+                                    browse
                                 </p>
                                 <p className="text-xs text-gray-500 mb-4">
-                                    Your file should include name and phone
-                                    number columns
+                                    Supported formats: .xls, .xlsx, .csv
                                 </p>
-                                {/* <Input
-                                    id="csv-upload"
+
+                                <input
+                                    ref={inputRef}
+                                    id="file-upload"
                                     type="file"
-                                    accept=".csv"
+                                    accept=".xlsx,.xls,.csv"
                                     className="hidden"
-                                    onChange={handleFileChange}
-                                /> */}
-                                <Input
-                                    id="excel-upload"
-                                    type="file"
-                                    accept=".xlsx, .xls, .csv"
                                     onChange={handleFileUpload}
                                 />
+
                                 <Label
-                                    htmlFor="csv-upload"
+                                    htmlFor="file-upload"
                                     className="cursor-pointer"
                                 >
-                                    <Button variant="outline">
-                                        Browse Files.
-                                        {/* <Input
-                                            id="excel-upload"
-                                            type="file"
-                                            accept=".xlsx, .xls, .csv"
-                                            onChange={handleFileUpload}
-                                        /> */}
+                                    <Button
+                                        variant="outline"
+                                        type="button"
+                                        onClick={onButtonClick}
+                                    >
+                                        Browse File
                                     </Button>
                                 </Label>
+
                                 {csvFile && (
                                     <div className="mt-4 flex items-center gap-2 p-2 bg-gray-100 rounded">
                                         <span className="text-sm">
@@ -245,12 +383,113 @@ const RecipientSelector = ({
                                             variant="ghost"
                                             size="sm"
                                             className="h-6 w-6 p-0"
-                                            onClick={() => setCsvFile(null)}
+                                            type="button"
+                                            onClick={() => {
+                                                setCsvFile(null);
+                                                setRecipients([]);
+                                                setNewContacts([]);
+                                            }}
                                         >
                                             <X size={14} />
                                         </Button>
                                     </div>
                                 )}
+                            </div>
+                            <div className=" mt-2">
+                                <Label>New Contacts:</Label>
+                                <Table>
+                                    <TableHeader>
+                                        <TableRow>
+                                            <TableHead>Name</TableHead>
+                                            <TableHead>Phone</TableHead>
+                                            <TableHead>Segment</TableHead>
+                                            <TableHead>Description</TableHead>
+                                            <TableHead>Action</TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {newcontacts.map((c, i) => (
+                                            <TableRow key={i}>
+                                                <TableCell>{c.name}</TableCell>
+                                                <TableCell>{c.phone}</TableCell>
+                                                <TableCell>
+                                                    {c.segment}
+                                                </TableCell>
+                                                <TableCell>
+                                                    {c.description}
+                                                </TableCell>
+                                                <TableCell>
+                                                    <Button
+                                                        variant="destructive"
+                                                        size="sm"
+                                                        className="h-6 w-6 p-0"
+                                                        type="button"
+                                                        onClick={(e) => {
+                                                            e.preventDefault();
+                                                            const updatedContacts =
+                                                                newcontacts.filter(
+                                                                    (
+                                                                        _,
+                                                                        index
+                                                                    ) =>
+                                                                        index !==
+                                                                        i
+                                                                );
+                                                            setNewContacts(
+                                                                updatedContacts
+                                                            );
+                                                        }}
+                                                    >
+                                                        <Trash size={14} />
+                                                    </Button>
+                                                </TableCell>
+                                            </TableRow>
+                                        ))}
+                                    </TableBody>
+                                </Table>
+
+                                {Object.keys(errors).length > 0 && (
+                                    <div className="bg-red-50 border-l-4 border-red-400 p-4 rounded-md">
+                                        <div className="flex items-center">
+                                            <div className="flex-shrink-0">
+                                                <svg
+                                                    className="h-5 w-5 text-red-400"
+                                                    xmlns="http://www.w3.org/2000/svg"
+                                                    viewBox="0 0 20 20"
+                                                    fill="currentColor"
+                                                >
+                                                    <path
+                                                        fillRule="evenodd"
+                                                        d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                                                        clipRule="evenodd"
+                                                    />
+                                                </svg>
+                                            </div>
+                                            <div className="ml-3">
+                                                <ul className="text-sm text-red-600">
+                                                    {Object.entries(errors).map(
+                                                        ([key, error]) => (
+                                                            <li key={key}>
+                                                                {error}
+                                                            </li>
+                                                        )
+                                                    )}
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                            <div className=" mt-2">
+                                <Button
+                                    //variant="outline"
+                                    onClick={saveDatabase}
+                                    disabled={processing}
+                                    className="flex justify-content-end items-center gap-2"
+                                >
+                                    <Save size={16} />
+                                    Save to Database
+                                </Button>
                             </div>
                         </CardContent>
                     </Card>
@@ -306,92 +545,94 @@ const RecipientSelector = ({
                             </div>
                         </CardContent>
                     </Card>
+                    <Card className="mt-8">
+                        <CardHeader>
+                            <CardTitle className="text-lg">
+                                Selected Recipients
+                            </CardTitle>
+                            <CardDescription>
+                                {totalRecipients} contacts will receive your
+                                message
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <ScrollArea className="h-[200px] rounded-md border p-4">
+                                <div className="space-y-2">
+                                    {recipients.length > 0 ? (
+                                        recipients.map((recipient) => (
+                                            <div
+                                                key={recipient.id}
+                                                className="flex items-center justify-between py-2 px-3 bg-gray-50 rounded-md"
+                                            >
+                                                <div>
+                                                    <p className="font-medium">
+                                                        {recipient.name}
+                                                    </p>
+                                                    <p className="text-sm text-gray-500">
+                                                        {recipient.phone}
+                                                    </p>
+                                                </div>
+                                                <div className="flex items-center gap-3">
+                                                    {recipient.segment && (
+                                                        <Badge
+                                                            variant="secondary"
+                                                            className="text-xs"
+                                                        >
+                                                            {recipient.segment}
+                                                        </Badge>
+                                                    )}
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        className="h-8 w-8 p-0"
+                                                        onClick={() =>
+                                                            handleRemoveRecipient(
+                                                                recipient.id
+                                                            )
+                                                        }
+                                                    >
+                                                        <X size={16} />
+                                                    </Button>
+                                                </div>
+                                            </div>
+                                        ))
+                                    ) : (
+                                        <div className="flex flex-col items-center justify-center h-[150px] text-center">
+                                            <Users className="h-10 w-10 text-gray-300 mb-2" />
+                                            <p className="text-gray-500">
+                                                No recipients selected
+                                            </p>
+                                            <p className="text-sm text-gray-400">
+                                                Import contacts or select
+                                                segments above
+                                            </p>
+                                        </div>
+                                    )}
+                                </div>
+                            </ScrollArea>
+                        </CardContent>
+                        <CardFooter className="flex justify-between">
+                            <Button
+                                variant="outline"
+                                onClick={onBack}
+                                className="flex items-center gap-2"
+                            >
+                                <ArrowLeft size={16} />
+                                Back to Message
+                            </Button>
+                            <Button
+                                onClick={() => onNext(recipients)}
+                                disabled={recipients.length === 0}
+                                className="flex items-center gap-2"
+                            >
+                                Continue to Schedule
+                                <ArrowRight size={16} />
+                            </Button>
+                        </CardFooter>
+                    </Card>
                 </TabsContent>
             </Tabs>
-
-            <Card className="mt-8">
-                <CardHeader>
-                    <CardTitle className="text-lg">
-                        Selected Recipients
-                    </CardTitle>
-                    <CardDescription>
-                        {totalRecipients} contacts will receive your message
-                    </CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <ScrollArea className="h-[200px] rounded-md border p-4">
-                        <div className="space-y-2">
-                            {recipients.length > 0 ? (
-                                recipients.map((recipient) => (
-                                    <div
-                                        key={recipient.id}
-                                        className="flex items-center justify-between py-2 px-3 bg-gray-50 rounded-md"
-                                    >
-                                        <div>
-                                            <p className="font-medium">
-                                                {recipient.name}
-                                            </p>
-                                            <p className="text-sm text-gray-500">
-                                                {recipient.phone}
-                                            </p>
-                                        </div>
-                                        <div className="flex items-center gap-3">
-                                            {recipient.segment && (
-                                                <Badge
-                                                    variant="secondary"
-                                                    className="text-xs"
-                                                >
-                                                    {recipient.segment}
-                                                </Badge>
-                                            )}
-                                            <Button
-                                                variant="ghost"
-                                                size="sm"
-                                                className="h-8 w-8 p-0"
-                                                onClick={() =>
-                                                    handleRemoveRecipient(
-                                                        recipient.id
-                                                    )
-                                                }
-                                            >
-                                                <X size={16} />
-                                            </Button>
-                                        </div>
-                                    </div>
-                                ))
-                            ) : (
-                                <div className="flex flex-col items-center justify-center h-[150px] text-center">
-                                    <Users className="h-10 w-10 text-gray-300 mb-2" />
-                                    <p className="text-gray-500">
-                                        No recipients selected
-                                    </p>
-                                    <p className="text-sm text-gray-400">
-                                        Import contacts or select segments above
-                                    </p>
-                                </div>
-                            )}
-                        </div>
-                    </ScrollArea>
-                </CardContent>
-                <CardFooter className="flex justify-between">
-                    <Button
-                        variant="outline"
-                        onClick={onBack}
-                        className="flex items-center gap-2"
-                    >
-                        <ArrowLeft size={16} />
-                        Back to Message
-                    </Button>
-                    <Button
-                        onClick={() => onNext(recipients)}
-                        disabled={recipients.length === 0}
-                        className="flex items-center gap-2"
-                    >
-                        Continue to Schedule
-                        <ArrowRight size={16} />
-                    </Button>
-                </CardFooter>
-            </Card>
+            <Modal show={IsModalSaveContacts}></Modal>
         </div>
     );
 };

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\templates;
 use Illuminate\Http\Request;
 use Twilio\Rest\Client;
 class SendMessageController extends Controller
@@ -24,5 +25,21 @@ class SendMessageController extends Controller
             $client->messages->create($recipient['phone'],
                 ['from' => $twilio_number, 'body' => $request->message] );
         }
+    }
+
+    public function saveTemplate (Request $request){
+
+        $request->validate([
+            'template' => 'required:min:3',
+            'content' => 'required:min:3',
+        ]);
+
+        templates::insert([
+            'templatename' => $request->template,
+            'content' => $request->content
+        ]);
+
+        return back()->with(['flash' => ['message' => 'Template Saved!',
+        'title' => 'Success!', 'icon' => 'success']]);
     }
 }
