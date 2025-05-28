@@ -1,10 +1,13 @@
 <?php
 
+use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RecipientsController;
 use App\Http\Controllers\SendMessageController;
 use App\Models\templates;
 use Illuminate\Foundation\Application;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -17,21 +20,40 @@ Route::get('/', function () {
     ]);
 });
 
-Route::get('/dashboard', function () {
-    return Inertia::render('Authenticated/home',[
-        'templates' => templates::get(),
-    ]);
-    //return Inertia::render('Dashboard');
+// Route::get('/dashboard', function () {
+//     return Inertia::render('Authenticated/home',[
+//         'templates' => templates::get(),
+//     ]);
+// },
+// )->middleware(['auth', 'verified'])->name('dashboard');
+
+Route::middleware(['auth', 'verified'])->group(function () {
+    Route::get('/dashboard', [DashboardController::class,'index'])->name('dashboard');
+
+    Route::get('/admin/get-segment/{segment}', [RecipientsController::class,'getsegment'])->name('admin.getsegment');
+    Route::get('/admin/get-recipients/{segment}', [DashboardController::class,'getrecipients'])->name('admin.getrecipients');
 
 
-},
-)->middleware(['auth', 'verified'])->name('dashboard');
+    // routes/web.php
+    Route::post('/services/send-sms', function(Request $request) {
+        $response = Http::withBasicAuth('mjgwapo', 'ocWFMPKc')
+        ->withHeaders([
+            'Content-Type' => 'application/json',
+        ])
+            ->post('http://192.168.1.46:8080/message', [
+                'message' => $request->message,
+                'phoneNumbers' => $request->phoneNumbers,
+                'simSlot' => 2
+            ]);
+        return $response->json();
+    }); // web middleware is added by default
+});
 
 Route::middleware('auth')->group(function(){
     Route::get('/recipients',[RecipientsController::class,'index'])->name('admin.recipients');
 
     Route::post('/recipients/add-contacts',[RecipientsController::class,'storeNewContacts'])->name('admin.contacts.add');
-    Route::post('/to-recipients-send',[SendMessageController::class,'sendMessage'])->name('admin.message.send');
+    Route::post('/to-recipients-send',[SendMessageController::class,'sendTestSms'])->name('admin.message.send');
 
 });
 

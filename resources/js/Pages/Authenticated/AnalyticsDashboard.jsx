@@ -151,7 +151,7 @@ const AnalyticsDashboard = ({
                         </p>
                     </CardContent>
                 </Card>
-                <Card>
+                {/* <Card>
                     <CardHeader className="pb-2">
                         <CardTitle className="text-sm font-medium">
                             Response Rate
@@ -166,7 +166,7 @@ const AnalyticsDashboard = ({
                             Recipients who responded to messages
                         </p>
                     </CardContent>
-                </Card>
+                </Card> */}
                 <Card>
                     <CardHeader className="pb-2">
                         <CardTitle className="text-sm font-medium">
@@ -255,9 +255,9 @@ const AnalyticsDashboard = ({
 
             <Card>
                 <CardHeader>
-                    <CardTitle>Recent Campaigns</CardTitle>
+                    <CardTitle>Recent Deliveries</CardTitle>
                     <CardDescription>
-                        Overview of your text blast campaigns
+                        Overview of your text blast messages
                     </CardDescription>
                 </CardHeader>
                 <CardContent>

@@ -35,4 +35,16 @@ return [
         ],
     ],
 
+    'infobip' => [
+        'base_url' => env('INFOBIP_BASE_URL'),
+        'api_key' => env('INFOBIP_API_KEY'),
+        'default_sender' => env('INFOBIP_DEFAULT_SENDER'),
+    ],
+
+
+    'transmitsms' => [
+        'key' => env('TRANSMITSMS_KEY'),
+        'secret' => env('TRANSMITSMS_SECRET'),
+        'default_sender' => 'SHARED NUMBER'//env('TRANSMITSMS_DEFAULT_SENDER'),
+    ],
 ];

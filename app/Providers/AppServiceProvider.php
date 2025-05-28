@@ -5,6 +5,9 @@ namespace App\Providers;
 use Illuminate\Support\Facades\Vite;
 use Illuminate\Support\ServiceProvider;
 
+use app\Services\InfobipService;
+use App\Services\TransmitSMSService;
+
 class AppServiceProvider extends ServiceProvider
 {
     /**

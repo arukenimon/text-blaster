@@ -30,6 +30,8 @@ import {
     X,
     Save,
     Trash,
+    Trash2,
+    Pencil,
 } from "lucide-react";
 import * as XLSX from "xlsx"; // Import the library
 
@@ -49,6 +51,10 @@ import Modal from "@/Components/Modal";
 import { router, useForm } from "@inertiajs/react";
 import InputError from "@/Components/InputError";
 
+import DataTable from "react-data-table-component";
+import PrimaryButton from "@/Components/PrimaryButton";
+import DangerButton from "@/Components/DangerButton";
+import CustomModal from "@/Components/CustomModal";
 export const useRecipientStore = create((set) => ({
     recipients: [],
     setRecipients: (recipients) => set({ recipients }),
@@ -57,8 +63,12 @@ export const useRecipientStore = create((set) => ({
 const RecipientSelector = ({
     onBack = () => {},
     onNext = () => {},
-    selectedRecipients = [],
+    allrecipients,
+    allsegments,
 }) => {
+    // useEffect(() => {
+    //     console.log("allrecips:", allrecipients);
+    // }, [allrecipients]);
     const { recipients, setRecipients } = useRecipientStore();
 
     const [selectedSegments, setSelectedSegments] = useState([]);
@@ -188,17 +198,13 @@ const RecipientSelector = ({
                             id: row.id || String(index + 1),
                             name: row.name || "Unknown",
                             phone: formatPhoneNumber(String(row.phone || "")),
-                            segment:
-                                row.segment ||
-                                determineSegment(row) ||
-                                "Not Set",
-                            description: row.description,
+                            segment: row.segment_id,
                         };
                     })
                     .filter(Boolean); // Remove null entries
 
                 setNewContacts(formattedData);
-                setRecipients(formattedData);
+                //setRecipients(formattedData);
                 clearErrors();
             } catch (error) {
                 console.error("Error parsing file:", error);
@@ -237,20 +243,28 @@ const RecipientSelector = ({
         return phone; // Return original if formatting fails
     };
 
-    // useEffect(() => {
-    //     console.log(recipients);
-    // }, []);
+    useEffect(() => {
+        console.log("recipientsxxxx:", recipients);
+    }, [recipients]);
 
     // const [selectedSegments, setSelectedSegments] = useState([]);
     // const [csvFile, setCsvFile] = useState(null); // Fixed useState declaration
     // const [activeTab, setActiveTab] = useState("import");
 
-    const segments = [
-        { id: "recent-service", label: "Recent Service Customers", count: 156 },
-        { id: "new-customers", label: "New Customers", count: 87 },
-        { id: "inactive", label: "Inactive Customers", count: 243 },
-        { id: "premium", label: "Premium Service Customers", count: 62 },
-    ];
+    // const segments = [
+    //     { id: "recent-service", label: "Recent Service Customers", count: 156 },
+    //     { id: "new-customers", label: "New Customers", count: 87 },
+    //     { id: "inactive", label: "Inactive Customers", count: 243 },
+    //     { id: "premium", label: "Premium Service Customers", count: 62 },
+    // ];
+
+    const [segments, setSegments] = useState([]);
+
+    useEffect(() => {
+        if (allsegments) {
+            setSegments(allsegments);
+        }
+    }, [allsegments, segments]);
 
     const handleFileChange = (e) => {
         if (e.target.files && e.target.files[0]) {
@@ -266,6 +280,10 @@ const RecipientSelector = ({
                 ? prev.filter((id) => id !== segmentId)
                 : [...prev, segmentId]
         );
+
+        // setRecipients((prev) => [
+        //     ...
+        // ])
     };
 
     const handleRemoveRecipient = (id) => {
@@ -295,6 +313,61 @@ const RecipientSelector = ({
         });
     };
 
+    const columns = [
+        {
+            name: "Client",
+            selector: (row) => row.name,
+            sortable: true,
+        },
+        {
+            name: "Contact #",
+            selector: (row) => row.contactno,
+            sortable: true,
+        },
+        {
+            name: "Actions",
+            cell: (row) => (
+                <>
+                    <PrimaryButton>
+                        <Pencil />
+                    </PrimaryButton>
+                    <DangerButton>
+                        <Trash2 />
+                    </DangerButton>
+                </>
+            ),
+            ignoreRowClick: true,
+            allowOverflow: true,
+            button: true,
+        },
+    ];
+
+    const [recipientsdata, setRecipientsData] = useState([]);
+
+    const [selectedSegmentID, setSelectedSegmentID] = useState(null);
+    const [isModalOpen, setIsModalOpen] = useState(false);
+
+    useEffect(() => {
+        if (selectedSegmentID) {
+            getRecipients(selectedSegmentID);
+        }
+    }, [selectedSegmentID]);
+
+    const getRecipients = async (segmentid) => {
+        let zxcdata = null;
+        fetch(`/admin/get-recipients/${segmentid}`)
+            .then((res) => res.json())
+            .then((data) => {
+                //console.log("get:", data);
+                setRecipientsData(data);
+                //return data;
+                //zxcdata = data;
+            });
+        //const get_ = await fetch(`/admin/get-recipients/${segmentid}`);
+
+        //alert(get_);
+        //return zxcdata.json();
+    };
     return (
         <div className="w-full max-w-5xl mx-auto bg-white p-6 rounded-lg shadow-sm">
             <CardHeader className="px-0">
@@ -396,7 +469,7 @@ const RecipientSelector = ({
                                 )}
                             </div>
                             <div className=" mt-2">
-                                <Label>New Contacts:</Label>
+                                <Label>Selected Contacts:</Label>
                                 <Table>
                                     <TableHeader>
                                         <TableRow>
@@ -480,7 +553,18 @@ const RecipientSelector = ({
                                     </div>
                                 )}
                             </div>
-                            <div className=" mt-2">
+                            <div className="flex justify-between mt-2">
+                                <Button
+                                    variant="outline"
+                                    onClick={(e) => {
+                                        setRecipients(newcontacts);
+                                        setActiveTab("segments");
+                                    }}
+                                    className="flex items-center gap-2"
+                                >
+                                    <ArrowLeft size={16} />
+                                    Add to Recipients
+                                </Button>
                                 <Button
                                     //variant="outline"
                                     onClick={saveDatabase}
@@ -498,6 +582,7 @@ const RecipientSelector = ({
                 <TabsContent value="segments" className="mt-4">
                     <Card>
                         <CardContent className="pt-6">
+                            {/* <DataTable columns={columns} data={allrecipients} /> */}
                             <div className="grid gap-4">
                                 {segments.map((segment) => (
                                     <div
@@ -521,28 +606,44 @@ const RecipientSelector = ({
                                                     htmlFor={segment.id}
                                                     className="font-medium cursor-pointer"
                                                 >
-                                                    {segment.label}
+                                                    {segment.id}
                                                 </Label>
                                                 <p className="text-sm text-gray-500">
-                                                    {segment.id ===
-                                                    "recent-service"
-                                                        ? "Customers who had service in the last 30 days"
-                                                        : segment.id ===
-                                                          "new-customers"
-                                                        ? "Customers who joined in the last 60 days"
-                                                        : segment.id ===
-                                                          "inactive"
-                                                        ? "No service in the last 6 months"
-                                                        : "Customers enrolled in premium service plans"}
+                                                    {segment.label}
                                                 </p>
                                             </div>
                                         </div>
-                                        <Badge variant="outline">
+
+                                        <Badge
+                                            variant="outline"
+                                            onClick={() => {
+                                                setSelectedSegmentID(
+                                                    segment.ID
+                                                );
+                                                setIsModalOpen((prev) =>
+                                                    prev ? false : true
+                                                );
+
+                                                // alert("asd");
+                                            }}
+                                        >
                                             {segment.count} contacts
                                         </Badge>
                                     </div>
                                 ))}
                             </div>
+
+                            <CustomModal
+                                isOpen={isModalOpen}
+                                onClose={() => setIsModalOpen(false)}
+                                title="Recipients"
+                                className=" m-5"
+                            >
+                                <DataTable
+                                    columns={columns}
+                                    data={recipientsdata}
+                                />
+                            </CustomModal>
                         </CardContent>
                     </Card>
                     <Card className="mt-8">
@@ -559,7 +660,7 @@ const RecipientSelector = ({
                             <ScrollArea className="h-[200px] rounded-md border p-4">
                                 <div className="space-y-2">
                                     {recipients.length > 0 ? (
-                                        recipients.map((recipient) => (
+                                        recipients.map((recipient, ii) => (
                                             <div
                                                 key={recipient.id}
                                                 className="flex items-center justify-between py-2 px-3 bg-gray-50 rounded-md"
@@ -585,10 +686,22 @@ const RecipientSelector = ({
                                                         variant="ghost"
                                                         size="sm"
                                                         className="h-8 w-8 p-0"
-                                                        onClick={() =>
-                                                            handleRemoveRecipient(
-                                                                recipient.id
-                                                            )
+                                                        onClick={
+                                                            () => {
+                                                                setRecipients(
+                                                                    recipients.filter(
+                                                                        (
+                                                                            nnn,
+                                                                            index
+                                                                        ) =>
+                                                                            index !==
+                                                                            ii
+                                                                    )
+                                                                );
+                                                            }
+                                                            // handleRemoveRecipient(
+                                                            //     recipient.id
+                                                            // )
                                                         }
                                                     >
                                                         <X size={16} />

@@ -49,8 +49,10 @@
         "vite": "^6.2.4"
     },
     "dependencies": {
+        "android-sms-gateway": "^2.0.0",
         "class-variance-authority": "^0.7.1",
         "lucide-react": "^0.503.0",
+        "react-data-table-component": "^7.7.0",
         "react-toastify": "^11.0.5",
         "tailwind-merge": "^3.2.0",
         "xlsx": "^0.18.5",

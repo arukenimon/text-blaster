@@ -12,4 +12,8 @@ class contacts extends Model
         'name','contactno','segment','description'
     ];
 
+
+    public function segment(){
+        return $this->belongsTo(segments::class,'segmentid');
+    }
 }

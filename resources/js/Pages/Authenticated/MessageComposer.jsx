@@ -57,28 +57,39 @@ export const useMessageStore = create((set) => ({
     setMessage: (message) => set({ message }),
 
     setTemplate_: (template_) => set({ template_ }),
-}));
 
-// export const useRecipientStore = create((set) => ({
-//     recipients: [],
-//     setRecipients: (recipients) => set({ recipients }),
-// }));
+    templateid: "",
+    setTemplateid: (templateid) => set({ templateid }),
+}));
 
 const MessageComposer = ({
     messagetemps,
     onNext = () => {},
     onSaveTemplate = () => {},
 }) => {
-    const { message, setMessage, template_, setTemplate_ } = useMessageStore();
-
-    useEffect(() => {
-        if (template_) {
-            console.log("templatex:", template_);
-        }
-    }, [template_]);
+    const {
+        message,
+        setMessage,
+        template_,
+        setTemplate_,
+        templateid,
+        setTemplateid,
+    } = useMessageStore();
 
     const [selectedTemplate, setSelectedTemplate] = useState(0);
-    ``;
+
+    useEffect(() => {
+        if (selectedTemplate) {
+            setTemplateid(selectedTemplate);
+        }
+    }, [selectedTemplate]);
+
+    useEffect(() => {
+        if (templateid) {
+            setSelectedTemplate(templateid);
+        }
+    }, [templateid]);
+
     const [templateName, setTemplateName] = useState("");
     const [activeTab, setActiveTab] = useState("compose");
 
@@ -283,6 +294,8 @@ const MessageComposer = ({
                                 id="message"
                                 placeholder="Type your message here..."
                                 value={message}
+                                //disabled={selectedTemplate != 0}
+                                readOnly={selectedTemplate != 0}
                                 onChange={(e) => setMessage(e.target.value)}
                                 className="min-h-[200px]"
                             />

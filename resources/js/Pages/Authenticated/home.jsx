@@ -29,8 +29,25 @@ import { useRecipientStore } from "./RecipientSelector";
 
 import { useMessageStore } from "./MessageComposer";
 
-const Home = ({ tabActive = "compose", templates }) => {
-    const [activeTab, setActiveTab] = useState(tabActive);
+import AdminLayout from "@/Layouts/AdminLayout";
+
+import { useTabStore } from "@/Layouts/AdminLayout";
+
+import Client from "android-sms-gateway";
+import InputLabel from "@/Components/InputLabel";
+import { Input } from "@/Components/frontend/ui/input";
+
+const Home = ({
+    tabActive = "compose",
+    templates,
+    allrecipients,
+    allsegments = [],
+}) => {
+    // useEffect(() => {
+    //     console.log("allrecipsxx:", allrecipients);
+    // }, [allrecipients]);
+    //const [activeTab, setActiveTab] = useState(tabActive);
+    const { activeTab, setActiveTab } = useTabStore();
     const { recipients } = useRecipientStore();
 
     const { message, template_ } = useMessageStore();
@@ -76,438 +93,311 @@ const Home = ({ tabActive = "compose", templates }) => {
         }
     }, [flash]);
 
-    const sendMessage = () => {
-        post(route("admin.message.send"), {
-            onSuccess: () => {
-                alert("success");
-            },
-            onError: (e) => {
-                console.log(e);
-                alert("error");
-            },
-        });
+    const sendMessage = async () => {
+        try {
+            const response = await axios.post("/services/send-sms", {
+                message: "hiwe",
+                phoneNumbers: ["+639273630590"],
+            });
+
+            console.log("Success:", response);
+            toast.success("Message sent successfully!");
+        } catch (error) {
+            console.error("Error:", error);
+            toast.error("Failed to send message");
+        }
     };
 
+    // Example of an HTTP client based on fetch
+    const httpFetchClient = {
+        get: async (url, headers) => {
+            const response = await fetch(url, {
+                method: "GET",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization:
+                        "Basic " + btoa("mjgwapo" + ":" + "ocWFMPKc"),
+                },
+            });
+
+            return response.json();
+        },
+        post: async (url, body, headers) => {
+            const response = await fetch(url, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization:
+                        "Basic " + btoa("mjgwapo" + ":" + "ocWFMPKc"),
+                },
+                body: JSON.stringify(body),
+            });
+
+            return response.json();
+        },
+        delete: async (url, headers) => {
+            const response = await fetch(url, {
+                method: "DELETE",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization:
+                        "Basic " + btoa("mjgwapo" + ":" + "ocWFMPKc"),
+                },
+            });
+
+            return response.json();
+        },
+    };
+
+    // Initialize the client with your API credentials
+    const apiClient = new Client("mjgwapo", "ocWFMPKc", httpFetchClient);
+
     return (
-        <div className="min-h-screen bg-background flex flex-col">
-            {/* Header */}
-            <header className="border-b bg-card">
-                <div className="container flex h-16 items-center justify-between px-4">
-                    <div className="flex items-center gap-4">
-                        <div className="font-bold text-xl flex items-center">
-                            <span className="text-primary">Auto</span>
-                            <span>Blitz</span>
-                        </div>
-                        {/* <nav className="hidden md:flex items-center gap-6 ml-6">
-                            <Button
-                                variant="ghost"
-                                className="text-muted-foreground"
-                                size="sm"
-                            >
-                                Dashboard
-                            </Button>
-                            <Button
-                                variant="ghost"
-                                className="text-muted-foreground"
-                                size="sm"
-                            >
-                                Campaigns
-                            </Button>
-                            <Button
-                                variant="ghost"
-                                className="text-muted-foreground"
-                                size="sm"
-                            >
-                                Templates
-                            </Button>
-                            <Button
-                                variant="ghost"
-                                className="text-muted-foreground"
-                                size="sm"
-                            >
-                                Contacts
-                            </Button>
-                        </nav> */}
-                    </div>
-                    <div className="flex items-center gap-4">
-                        <Button variant="ghost" size="icon">
-                            <Bell className="h-5 w-5" />
-                        </Button>
-                        <Button variant="ghost" size="icon">
-                            <Settings className="h-5 w-5" />
-                        </Button>
-                        <Avatar>
-                            <AvatarImage
-                                src="https://api.dicebear.com/7.x/avataaars/svg?seed=admin"
-                                alt="User"
+        <AdminLayout>
+            <h1 className="text-3xl font-bold mb-6">Text Blaster</h1>
+            <Card className="mb-6">
+                <CardContent className="p-6">
+                    <Tabs
+                        value={activeTab}
+                        onValueChange={setActiveTab}
+                        className="w-full"
+                    >
+                        <TabsList className="grid grid-cols-5 mb-6">
+                            <TabsTrigger value="compose">Compose</TabsTrigger>
+                            <TabsTrigger value="recipients">
+                                Recipients
+                            </TabsTrigger>
+                            <TabsTrigger value="schedule">Schedule</TabsTrigger>
+                            <TabsTrigger value="analytics">
+                                Analytics
+                            </TabsTrigger>
+                            <TabsTrigger value="configuration">
+                                Configuration
+                            </TabsTrigger>
+                        </TabsList>
+
+                        <TabsContent value="compose" className="space-y-4">
+                            <MessageComposer
+                                onNext={() => setActiveTab("recipients")}
+                                messagetemps={templates}
                             />
-                            <AvatarFallback>AB</AvatarFallback>
-                        </Avatar>
-                        <Link method="POST" href={route("logout")}>
-                            Logout
-                        </Link>
-                    </div>
-                </div>
-            </header>
+                        </TabsContent>
 
-            {/* Main Content */}
-            <div className="flex flex-1">
-                {/* Sidebar */}
-                <aside className="hidden md:flex w-64 flex-col border-r bg-card p-4">
-                    <div className="space-y-4">
-                        <div className="py-2">
-                            <h2 className="text-lg font-semibold mb-2">
-                                Text Blast
-                            </h2>
-                            <div className="space-y-1">
-                                <Button
-                                    variant={
-                                        activeTab === "compose"
-                                            ? "secondary"
-                                            : "ghost"
-                                    }
-                                    className="w-full justify-start"
-                                    onClick={() => {
-                                        setActiveTab("compose");
-                                    }}
-                                >
-                                    <MessageSquare className="mr-2 h-4 w-4" />
-                                    Compose Message
-                                </Button>
-                                <Button
-                                    variant={
-                                        activeTab === "recipients"
-                                            ? "secondary"
-                                            : "ghost"
-                                    }
-                                    className="w-full justify-start"
-                                    onClick={() => {
-                                        setActiveTab("recipients");
-                                        // router.visit(route("admin.recipients"));
-                                    }}
-                                >
-                                    <Users className="mr-2 h-4 w-4" />
-                                    Select Recipients
-                                </Button>
-                                <Button
-                                    variant={
-                                        activeTab === "schedule"
-                                            ? "secondary"
-                                            : "ghost"
-                                    }
-                                    className="w-full justify-start"
-                                    onClick={() => setActiveTab("schedule")}
-                                >
-                                    <Calendar className="mr-2 h-4 w-4" />
-                                    Schedule
-                                </Button>
-                                <Button
-                                    variant={
-                                        activeTab === "analytics"
-                                            ? "secondary"
-                                            : "ghost"
-                                    }
-                                    className="w-full justify-start"
-                                    onClick={() => setActiveTab("analytics")}
-                                >
-                                    <BarChart2 className="mr-2 h-4 w-4" />
-                                    Analytics
-                                </Button>
+                        <TabsContent value="recipients" className="space-y-4">
+                            <RecipientSelector
+                                onBack={() => setActiveTab("compose")}
+                                onNext={() => setActiveTab("schedule")}
+                                allrecipients={allrecipients}
+                                allsegments={allsegments}
+                            />
+                        </TabsContent>
+
+                        <TabsContent value="schedule" className="space-y-4">
+                            <div className="flex flex-col space-y-4">
+                                <h2 className="text-xl font-semibold">
+                                    Schedule Your Message
+                                </h2>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div className="space-y-4">
+                                        <div className="flex items-center space-x-2">
+                                            <input
+                                                type="radio"
+                                                id="send-now"
+                                                name="schedule"
+                                                defaultChecked
+                                            />
+                                            <label htmlFor="send-now">
+                                                Send Immediately
+                                            </label>
+                                        </div>
+                                        <div className="flex items-center space-x-2">
+                                            <input
+                                                type="radio"
+                                                id="schedule-later"
+                                                name="schedule"
+                                                disabled
+                                            />
+                                            <label htmlFor="schedule-later">
+                                                Schedule for Later
+                                                <small className=" text-black-50">
+                                                    {" (On Development...)"}
+                                                </small>
+                                            </label>
+                                        </div>
+                                        <div className="pt-4">
+                                            <label className="block text-sm font-medium mb-1">
+                                                Date and Time
+                                            </label>
+                                            <input
+                                                type="datetime-local"
+                                                className="w-full p-2 border rounded-md"
+                                                disabled
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="bg-muted/50 p-4 rounded-md">
+                                        <h3 className="font-medium mb-2">
+                                            Message Summary
+                                        </h3>
+                                        <div className="space-y-2 text-sm">
+                                            <p>
+                                                <strong>Template:</strong>{" "}
+                                                {template_}
+                                            </p>
+                                            <p>
+                                                <strong>Recipients:</strong>{" "}
+                                                {recipients.length} contacts
+                                            </p>
+                                            <p>
+                                                <strong>Estimated Cost:</strong>
+                                                {" ₱"}
+                                                {recipients
+                                                    ? (
+                                                          recipients.length *
+                                                          2.5
+                                                      ).toFixed(2)
+                                                    : 0}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="flex justify-between pt-6">
+                                    <Button
+                                        variant="outline"
+                                        onClick={() =>
+                                            setActiveTab("recipients")
+                                        }
+                                    >
+                                        Back
+                                    </Button>
+                                    <Button
+                                        onClick={() =>
+                                            // setActiveTab(
+                                            //     "analytics"
+                                            // )
+                                            {
+                                                sendMessage();
+                                            }
+                                        }
+                                    >
+                                        Send Message
+                                    </Button>
+                                </div>
+                            </div>
+                        </TabsContent>
+
+                        <TabsContent value="analytics" className="space-y-4">
+                            <AnalyticsDashboard />
+                        </TabsContent>
+
+                        <TabsContent
+                            value="configuration"
+                            className="space-y-4"
+                        >
+                            {/* <AnalyticsDashboard /> */}
+                            wew
+                        </TabsContent>
+                        <TabsContent value="accsettings" className="space-y-4">
+                            {/* <AnalyticsDashboard /> */}
+                            <div className="grid grid-cols-3 gap-4">
+                                <div>
+                                    <InputLabel value={"First Name"} />
+                                    <Input value={"asd"} className=" w-full" />
+                                </div>
+                                <div>
+                                    <InputLabel value={"Middle Name"} />
+                                    <Input value={"asd"} className=" w-full" />
+                                </div>
+                                <div>
+                                    <InputLabel value={"Last Name"} />
+                                    <Input value={"asd"} className=" w-full" />
+                                </div>
+                            </div>
+                        </TabsContent>
+                    </Tabs>
+                </CardContent>
+            </Card>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <Card>
+                    <CardContent className="p-6">
+                        <h3 className="font-semibold text-lg mb-2">
+                            Recent Campaigns
+                        </h3>
+                        <div className="space-y-3">
+                            <div className="flex justify-between items-center">
+                                <span>Summer Sale Promo</span>
+                                <span className="text-green-500 text-sm">
+                                    Sent
+                                </span>
+                            </div>
+                            <div className="flex justify-between items-center">
+                                <span>Service Reminder</span>
+                                <span className="text-amber-500 text-sm">
+                                    Scheduled
+                                </span>
+                            </div>
+                            <div className="flex justify-between items-center">
+                                <span>New Inventory Alert</span>
+                                <span className="text-gray-500 text-sm">
+                                    Draft
+                                </span>
                             </div>
                         </div>
-                        {/* <div className="py-2">
-                            <h2 className="text-lg font-semibold mb-2">
-                                Quick Access
-                            </h2>
-                            <div className="space-y-1">
-                                <Button
-                                    variant="ghost"
-                                    className="w-full justify-start"
-                                >
-                                    Recent Campaigns
-                                </Button>
-                                <Button
-                                    variant="ghost"
-                                    className="w-full justify-start"
-                                >
-                                    Saved Templates
-                                </Button>
-                                <Button
-                                    variant="ghost"
-                                    className="w-full justify-start"
-                                >
-                                    Contact Lists
-                                </Button>
+                    </CardContent>
+                </Card>
+
+                <Card>
+                    <CardContent className="p-6">
+                        <h3 className="font-semibold text-lg mb-2">
+                            Message Stats
+                        </h3>
+                        <div className="space-y-3">
+                            <div className="flex justify-between items-center">
+                                <span>Messages Sent (MTD)</span>
+                                <span className="font-medium">1,245</span>
                             </div>
-                        </div> */}
-                    </div>
-                </aside>
-
-                {/* Main Content Area */}
-                <main className="flex-1 p-6 overflow-auto">
-                    <div className="container mx-auto">
-                        <h1 className="text-3xl font-bold mb-6">
-                            Text Blast System
-                        </h1>
-
-                        <Card className="mb-6">
-                            <CardContent className="p-6">
-                                <Tabs
-                                    value={activeTab}
-                                    onValueChange={setActiveTab}
-                                    className="w-full"
-                                >
-                                    <TabsList className="grid grid-cols-4 mb-6">
-                                        <TabsTrigger value="compose">
-                                            Compose
-                                        </TabsTrigger>
-                                        <TabsTrigger value="recipients">
-                                            Recipients
-                                        </TabsTrigger>
-                                        <TabsTrigger value="schedule">
-                                            Schedule
-                                        </TabsTrigger>
-                                        <TabsTrigger value="analytics">
-                                            Analytics
-                                        </TabsTrigger>
-                                    </TabsList>
-
-                                    <TabsContent
-                                        value="compose"
-                                        className="space-y-4"
-                                    >
-                                        <MessageComposer
-                                            onNext={() =>
-                                                setActiveTab("recipients")
-                                            }
-                                            messagetemps={templates}
-                                        />
-                                    </TabsContent>
-
-                                    <TabsContent
-                                        value="recipients"
-                                        className="space-y-4"
-                                    >
-                                        <RecipientSelector
-                                            onBack={() =>
-                                                setActiveTab("compose")
-                                            }
-                                            onNext={() =>
-                                                setActiveTab("schedule")
-                                            }
-                                        />
-                                    </TabsContent>
-
-                                    <TabsContent
-                                        value="schedule"
-                                        className="space-y-4"
-                                    >
-                                        <div className="flex flex-col space-y-4">
-                                            <h2 className="text-xl font-semibold">
-                                                Schedule Your Message
-                                            </h2>
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                                <div className="space-y-4">
-                                                    <div className="flex items-center space-x-2">
-                                                        <input
-                                                            type="radio"
-                                                            id="send-now"
-                                                            name="schedule"
-                                                            defaultChecked
-                                                        />
-                                                        <label htmlFor="send-now">
-                                                            Send Immediately
-                                                        </label>
-                                                    </div>
-                                                    <div className="flex items-center space-x-2">
-                                                        <input
-                                                            type="radio"
-                                                            id="schedule-later"
-                                                            name="schedule"
-                                                            disabled
-                                                        />
-                                                        <label htmlFor="schedule-later">
-                                                            Schedule for Later
-                                                            <small className=" text-black-50">
-                                                                {
-                                                                    " (On Development...)"
-                                                                }
-                                                            </small>
-                                                        </label>
-                                                    </div>
-                                                    <div className="pt-4">
-                                                        <label className="block text-sm font-medium mb-1">
-                                                            Date and Time
-                                                        </label>
-                                                        <input
-                                                            type="datetime-local"
-                                                            className="w-full p-2 border rounded-md"
-                                                            disabled
-                                                        />
-                                                    </div>
-                                                </div>
-                                                <div className="bg-muted/50 p-4 rounded-md">
-                                                    <h3 className="font-medium mb-2">
-                                                        Message Summary
-                                                    </h3>
-                                                    <div className="space-y-2 text-sm">
-                                                        <p>
-                                                            <strong>
-                                                                Template:
-                                                            </strong>{" "}
-                                                            {template_}
-                                                        </p>
-                                                        <p>
-                                                            <strong>
-                                                                Recipients:
-                                                            </strong>{" "}
-                                                            {recipients.length}{" "}
-                                                            contacts
-                                                        </p>
-                                                        <p>
-                                                            <strong>
-                                                                Estimated Cost:
-                                                            </strong>
-                                                            {" ₱"}
-                                                            {recipients
-                                                                ? (
-                                                                      recipients.length *
-                                                                      2.5
-                                                                  ).toFixed(2)
-                                                                : 0}
-                                                        </p>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div className="flex justify-between pt-6">
-                                                <Button
-                                                    variant="outline"
-                                                    onClick={() =>
-                                                        setActiveTab(
-                                                            "recipients"
-                                                        )
-                                                    }
-                                                >
-                                                    Back
-                                                </Button>
-                                                <Button
-                                                    onClick={() =>
-                                                        // setActiveTab(
-                                                        //     "analytics"
-                                                        // )
-                                                        {
-                                                            sendMessage();
-                                                        }
-                                                    }
-                                                >
-                                                    Send Message
-                                                </Button>
-                                            </div>
-                                        </div>
-                                    </TabsContent>
-
-                                    <TabsContent
-                                        value="analytics"
-                                        className="space-y-4"
-                                    >
-                                        <AnalyticsDashboard />
-                                    </TabsContent>
-                                </Tabs>
-                            </CardContent>
-                        </Card>
-
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                            <Card>
-                                <CardContent className="p-6">
-                                    <h3 className="font-semibold text-lg mb-2">
-                                        Recent Campaigns
-                                    </h3>
-                                    <div className="space-y-3">
-                                        <div className="flex justify-between items-center">
-                                            <span>Summer Sale Promo</span>
-                                            <span className="text-green-500 text-sm">
-                                                Sent
-                                            </span>
-                                        </div>
-                                        <div className="flex justify-between items-center">
-                                            <span>Service Reminder</span>
-                                            <span className="text-amber-500 text-sm">
-                                                Scheduled
-                                            </span>
-                                        </div>
-                                        <div className="flex justify-between items-center">
-                                            <span>New Inventory Alert</span>
-                                            <span className="text-gray-500 text-sm">
-                                                Draft
-                                            </span>
-                                        </div>
-                                    </div>
-                                </CardContent>
-                            </Card>
-
-                            <Card>
-                                <CardContent className="p-6">
-                                    <h3 className="font-semibold text-lg mb-2">
-                                        Message Stats
-                                    </h3>
-                                    <div className="space-y-3">
-                                        <div className="flex justify-between items-center">
-                                            <span>Messages Sent (MTD)</span>
-                                            <span className="font-medium">
-                                                1,245
-                                            </span>
-                                        </div>
-                                        <div className="flex justify-between items-center">
-                                            <span>Avg. Response Rate</span>
-                                            <span className="font-medium">
-                                                12.3%
-                                            </span>
-                                        </div>
-                                        <div className="flex justify-between items-center">
-                                            <span>Active Campaigns</span>
-                                            <span className="font-medium">
-                                                3
-                                            </span>
-                                        </div>
-                                    </div>
-                                </CardContent>
-                            </Card>
-
-                            <Card>
-                                <CardContent className="p-6">
-                                    <h3 className="font-semibold text-lg mb-2">
-                                        Quick Actions
-                                    </h3>
-                                    <div className="space-y-2">
-                                        <Button
-                                            variant="outline"
-                                            className="w-full justify-start"
-                                        >
-                                            <span className="mr-2">+</span> New
-                                            Template
-                                        </Button>
-                                        <Button
-                                            variant="outline"
-                                            className="w-full justify-start"
-                                        >
-                                            <span className="mr-2">+</span>{" "}
-                                            Import Contacts
-                                        </Button>
-                                        <Button
-                                            variant="outline"
-                                            className="w-full justify-start"
-                                        >
-                                            <span className="mr-2">↓</span>{" "}
-                                            Export Reports
-                                        </Button>
-                                    </div>
-                                </CardContent>
-                            </Card>
+                            <div className="flex justify-between items-center">
+                                <span>Avg. Response Rate</span>
+                                <span className="font-medium">12.3%</span>
+                            </div>
+                            <div className="flex justify-between items-center">
+                                <span>Active Campaigns</span>
+                                <span className="font-medium">3</span>
+                            </div>
                         </div>
-                    </div>
-                </main>
+                    </CardContent>
+                </Card>
+
+                <Card>
+                    <CardContent className="p-6">
+                        <h3 className="font-semibold text-lg mb-2">
+                            Quick Actions
+                        </h3>
+                        <div className="space-y-2">
+                            <Button
+                                variant="outline"
+                                className="w-full justify-start"
+                            >
+                                <span className="mr-2">+</span> New Template
+                            </Button>
+                            <Button
+                                variant="outline"
+                                className="w-full justify-start"
+                            >
+                                <span className="mr-2">+</span> Import Contacts
+                            </Button>
+                            <Button
+                                variant="outline"
+                                className="w-full justify-start"
+                            >
+                                <span className="mr-2">↓</span> Export Reports
+                            </Button>
+                        </div>
+                    </CardContent>
+                </Card>
             </div>
-        </div>
+        </AdminLayout>
     );
 };
 
