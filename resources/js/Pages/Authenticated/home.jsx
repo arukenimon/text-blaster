@@ -44,6 +44,7 @@ const Home = ({
     allrecipients,
     allsegments = [],
     config,
+    cloudconfig,
 }) => {
     // useEffect(() => {
     //     console.log("allrecipsxx:", allrecipients);
@@ -64,6 +65,10 @@ const Home = ({
         //console.log("template:", template);
         setData("message", message);
         setData("recipients", recipients);
+
+        if (recipients) {
+            console.log("recipients:", recipients);
+        }
     }, [recipients, message]);
 
     const { flash } = usePage().props;
@@ -95,19 +100,25 @@ const Home = ({
         }
     }, [flash]);
 
+    const [isLoading, setIsLoading] = useState(false);
+
     const sendMessage = async () => {
         try {
+            setIsLoading(true);
             const response = await axios.post("/services/send-sms", {
-                message: "hiwe",
-                phoneNumbers: ["+639273630590"],
+                message: message,
+                phoneNumbers: recipients.map((r) => r.phone), //["+639273630590"],
             });
             if (response.data.flash) {
                 const { icon, message, title } = response.data.flash;
                 alert_toast(title, message, icon);
             }
+            console.log(response);
         } catch (error) {
             console.error("Error:", error);
             toast.error("Failed to send message");
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -296,6 +307,7 @@ const Home = ({
                                                 sendMessage();
                                             }
                                         }
+                                        disabled={isLoading}
                                     >
                                         Send Message
                                     </Button>
@@ -311,7 +323,10 @@ const Home = ({
                             value="configuration"
                             className="space-y-4"
                         >
-                            <Configuration config={config} />
+                            <Configuration
+                                config={config}
+                                cloudconfig={cloudconfig}
+                            />
                         </TabsContent>
                         <TabsContent value="accsettings" className="space-y-4">
                             <div className="grid grid-cols-3 gap-4">

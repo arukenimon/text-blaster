@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\cloudconfig;
 use App\Models\config_tables;
 use App\Models\contacts;
 use App\Models\segments;
@@ -23,6 +24,7 @@ class DashboardController extends Controller
     public function index(){
         return Inertia::render('Authenticated/home',[
             'config' => config_tables::get()[0] ?? [],
+            'cloudconfig' => cloudconfig::get()[0] ?? [],
             'templates' => templates::get(),
             'allrecipients' => contacts::with(['segment'])->get(),
             'allsegments' => segments::all()->map(function($segment){
@@ -38,20 +40,36 @@ class DashboardController extends Controller
 
     public function saveConfig(Request $request){
         $request->validate([
-            'localaddr' => "required",
-            'port' => "required",
+            'type' => 'in:local,cloud',
+            'localaddr' => "required_if:type,local",
+            'port' => "required_if:type,local",
+
             'user' => "required",
             'pw' => "required",
+
+
         ]);
 
-        config_tables::updateOrInsert(
+        //dd($request);
+        if($request->type == 'local'){
+            config_tables::updateOrInsert(
 ['id' => config_tables::first()?->id ?? null],
-[
-            "localaddress"=> $request->localaddr,
-            "port"=> $request->port,
-            "username"=> $request->user,
-            "password"=> $request->pw,
-        ]);
+    [
+                "localaddress"=> $request->localaddr,
+                "port"=> $request->port,
+                "username"=> $request->user,
+                "password"=> $request->pw,
+            ]);
+        }else{
+            cloudconfig::updateOrInsert(
+                ['id' => cloudconfig::first()?->id ?? null],
+            [
+                "username" => $request->user,
+                "password" => $request->pw,
+            ]);
+        }
+
+
 
 
         return back()->with([
@@ -63,6 +81,9 @@ class DashboardController extends Controller
         ]);
     }
     public function sendmessage(Request $request){
+
+
+
 
         if(config_tables::count() < 1){
             return response()->json([
@@ -77,18 +98,36 @@ class DashboardController extends Controller
 
         $config = config_tables::first();
 
+        $cloudconfig = cloudconfig::first();
 
-         $response = Http::withBasicAuth('mjgwapo', 'ocWFMPKc')
+        // FOR LOCAL HOST
+        //  $response = Http::withBasicAuth('mjgwapo', 'ocWFMPKc')
+        // ->withHeaders([
+        //     'Content-Type' => 'application/json',
+        // ])
+        //     ->post("http://{$config->localaddress}:{$config->port}/message", [
+        //         'message' => $request->message,
+        //         'phoneNumbers' => $request->phoneNumbers,
+        //         'simNumber' => 2,
+        //     ]);
+
+         $response = Http::withBasicAuth($cloudconfig->username, $cloudconfig->password)
         ->withHeaders([
             'Content-Type' => 'application/json',
         ])
-            ->post("http://{$config->localaddress}:{$config->port}/message", [
+            ->post("https://api.sms-gate.app/3rdparty/v1/message", [
                 'message' => $request->message,
                 'phoneNumbers' => $request->phoneNumbers,
                 'simNumber' => 2,
             ]);
 
-
-        return $response->json();
+         return response()->json([
+                'flash' => [
+                    'title' => 'Success!',
+                    'message' => 'Message has been successfully sent!',
+                    'icon' => 'success',
+                    'response' => $response
+                ]
+            ]);
     }
 }

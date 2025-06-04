@@ -73,7 +73,7 @@ const RecipientSelector = ({
 
     const [selectedSegments, setSelectedSegments] = useState([]);
     const [csvFile, setCsvFile] = useState(null);
-    const [activeTab, setActiveTab] = useState("segments");
+    const [activeTab, setActiveTab] = useState("import");
     const [dragActive, setDragActive] = useState(false);
     const inputRef = useRef(null);
 
@@ -157,7 +157,6 @@ const RecipientSelector = ({
 
     useEffect(() => {
         if (newcontacts) {
-            console.log("new contacts:", newcontacts);
             setData("contacts", newcontacts);
         }
     }, [newcontacts]);
@@ -243,9 +242,9 @@ const RecipientSelector = ({
         return phone; // Return original if formatting fails
     };
 
-    useEffect(() => {
-        console.log("recipientsxxxx:", recipients);
-    }, [recipients]);
+    // useEffect(() => {
+    //     //console.log("recipientsxxxx:", recipients);
+    // }, [recipients]);
 
     // const [selectedSegments, setSelectedSegments] = useState([]);
     // const [csvFile, setCsvFile] = useState(null); // Fixed useState declaration
@@ -387,18 +386,18 @@ const RecipientSelector = ({
             >
                 <TabsList className="grid w-full grid-cols-2">
                     <TabsTrigger
-                        value="segments"
-                        className="flex items-center gap-2"
-                    >
-                        <Users size={16} />
-                        Select Segments
-                    </TabsTrigger>
-                    <TabsTrigger
                         value="import"
                         className="flex items-center gap-2"
                     >
                         <Upload size={16} />
                         Import Contacts
+                    </TabsTrigger>
+                    <TabsTrigger
+                        value="segments"
+                        className="flex items-center gap-2"
+                    >
+                        <Users size={16} />
+                        Select Segments
                     </TabsTrigger>
                 </TabsList>
 
@@ -562,7 +561,7 @@ const RecipientSelector = ({
                                     }}
                                     className="flex items-center gap-2"
                                 >
-                                    <ArrowLeft size={16} />
+                                    <ArrowRight size={16} />
                                     Add to Recipients
                                 </Button>
                                 <Button
