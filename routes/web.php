@@ -6,7 +6,6 @@ use App\Http\Controllers\RecipientsController;
 use App\Http\Controllers\SendMessageController;
 use App\Models\templates;
 use Illuminate\Foundation\Application;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -34,19 +33,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/admin/get-recipients/{segment}', [DashboardController::class,'getrecipients'])->name('admin.getrecipients');
 
 
+    Route::post('/settings/saveconfig',[DashboardController::class,'saveConfig'])->name('admin.settings.saveconfig');
+
     // routes/web.php
-    Route::post('/services/send-sms', function(Request $request) {
-        $response = Http::withBasicAuth('mjgwapo', 'ocWFMPKc')
-        ->withHeaders([
-            'Content-Type' => 'application/json',
-        ])
-            ->post('http://192.168.1.46:8080/message', [
-                'message' => $request->message,
-                'phoneNumbers' => $request->phoneNumbers,
-                'simSlot' => 2
-            ]);
-        return $response->json();
-    }); // web middleware is added by default
+    Route::post('/services/send-sms', [DashboardController::class,'sendmessage'])->name('admin.send.mssg'); // web middleware is added by default
 });
 
 Route::middleware('auth')->group(function(){

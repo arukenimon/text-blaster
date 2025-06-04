@@ -36,12 +36,14 @@ import { useTabStore } from "@/Layouts/AdminLayout";
 import Client from "android-sms-gateway";
 import InputLabel from "@/Components/InputLabel";
 import { Input } from "@/Components/frontend/ui/input";
+import Configuration from "./Configuration";
 
 const Home = ({
     tabActive = "compose",
     templates,
     allrecipients,
     allsegments = [],
+    config,
 }) => {
     // useEffect(() => {
     //     console.log("allrecipsxx:", allrecipients);
@@ -99,9 +101,10 @@ const Home = ({
                 message: "hiwe",
                 phoneNumbers: ["+639273630590"],
             });
-
-            console.log("Success:", response);
-            toast.success("Message sent successfully!");
+            if (response.data.flash) {
+                const { icon, message, title } = response.data.flash;
+                alert_toast(title, message, icon);
+            }
         } catch (error) {
             console.error("Error:", error);
             toast.error("Failed to send message");
@@ -151,6 +154,20 @@ const Home = ({
 
     // Initialize the client with your API credentials
     const apiClient = new Client("mjgwapo", "ocWFMPKc", httpFetchClient);
+
+    const { user } = usePage().props.auth;
+
+    const {
+        data: dataPw,
+        setData: setDataPw,
+        post: postPw,
+        recentlySuccessful: recentSuccessPw,
+        errors: errorsPw,
+        processing: proccessPw,
+    } = useForm({
+        email: user?.email,
+        password: user?.password,
+    });
 
     return (
         <AdminLayout>
@@ -294,23 +311,23 @@ const Home = ({
                             value="configuration"
                             className="space-y-4"
                         >
-                            {/* <AnalyticsDashboard /> */}
-                            wew
+                            <Configuration config={config} />
                         </TabsContent>
                         <TabsContent value="accsettings" className="space-y-4">
-                            {/* <AnalyticsDashboard /> */}
                             <div className="grid grid-cols-3 gap-4">
                                 <div>
-                                    <InputLabel value={"First Name"} />
-                                    <Input value={"asd"} className=" w-full" />
+                                    <InputLabel value={"Email"} />
+                                    <Input
+                                        value={dataPw.email}
+                                        className=" w-full"
+                                    />
                                 </div>
                                 <div>
-                                    <InputLabel value={"Middle Name"} />
-                                    <Input value={"asd"} className=" w-full" />
-                                </div>
-                                <div>
-                                    <InputLabel value={"Last Name"} />
-                                    <Input value={"asd"} className=" w-full" />
+                                    <InputLabel value={"Pw"} />
+                                    <Input
+                                        value={dataPw.password}
+                                        className=" w-full"
+                                    />
                                 </div>
                             </div>
                         </TabsContent>
