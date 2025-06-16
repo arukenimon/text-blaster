@@ -271,14 +271,13 @@ const AnalyticsDashboard = ({
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {campaigns.map((campaign) => (
+                            {/* {campaigns.map((campaign) => (
                                 <TableRow key={campaign.id}>
                                     <TableCell className="font-medium">
                                         {campaign.name}
                                     </TableCell>
                                     <TableCell>{campaign.date}</TableCell>
                                     <TableCell>{campaign.recipients}</TableCell>
-                                    {/* <TableCell>{campaign.delivered}</TableCell> */}
                                     <TableCell>
                                         <span
                                             className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
@@ -297,7 +296,7 @@ const AnalyticsDashboard = ({
                                         </span>
                                     </TableCell>
                                 </TableRow>
-                            ))}
+                            ))} */}
                         </TableBody>
                     </Table>
                 </CardContent>
