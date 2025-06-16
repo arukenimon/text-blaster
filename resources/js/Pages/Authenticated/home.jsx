@@ -37,6 +37,8 @@ import Client from "android-sms-gateway";
 import InputLabel from "@/Components/InputLabel";
 import { Input } from "@/Components/frontend/ui/input";
 import Configuration from "./Configuration";
+import PrimaryButton from "@/Components/PrimaryButton";
+import PrintErrors from "@/Components/PrintErrors";
 
 const Home = ({
     tabActive = "compose",
@@ -175,10 +177,56 @@ const Home = ({
         recentlySuccessful: recentSuccessPw,
         errors: errorsPw,
         processing: proccessPw,
+        put: putPw,
+        clearErrors: clearErrorsPw,
+        reset: resetPw,
+    } = useForm({
+        //email: user?.email,
+        current_password: "",
+        password: "",
+        confirmpw: "",
+    });
+
+    const updatePassword = (e) => {
+        e.preventDefault();
+
+        putPw(route("admin.settings.password.update"), {
+            onSuccess: () => {
+                clearErrorsPw();
+                resetPw();
+            },
+            onFinish: () => {
+                router.reload({
+                    only: ["flash", "auth"],
+                });
+            },
+        });
+    };
+
+    const {
+        data: dataEmail,
+        setData: setDataEmail,
+        post: postEmail,
+        recentlySuccessful: recentSuccessEmail,
+        errors: errorsEmail,
+        processing: proccessEmail,
+        put: putEmail,
     } = useForm({
         email: user?.email,
-        password: user?.password,
+        //password: user?.password,
     });
+
+    const updateEmail = (e) => {
+        e.preventDefault();
+
+        putEmail(route("admin.settings.email.update"), {
+            onFinish: () => {
+                router.reload({
+                    only: ["flash", "auth"],
+                });
+            },
+        });
+    };
 
     return (
         <AdminLayout>
@@ -328,23 +376,85 @@ const Home = ({
                                 cloudconfig={cloudconfig}
                             />
                         </TabsContent>
-                        <TabsContent value="accsettings" className="space-y-4">
-                            <div className="grid grid-cols-3 gap-4">
-                                <div>
-                                    <InputLabel value={"Email"} />
-                                    <Input
-                                        value={dataPw.email}
-                                        className=" w-full"
-                                    />
+                        <TabsContent
+                            value="accsettings"
+                            className="space-y-4 w-1/2"
+                        >
+                            <PrintErrors errors={errorsEmail} />
+                            <h3>Change your email here</h3>
+
+                            <div>
+                                <InputLabel value={"Email"} />
+                                <Input
+                                    value={dataEmail.email}
+                                    className=" w-full"
+                                    onChange={(e) =>
+                                        setDataEmail("email", e.target.value)
+                                    }
+                                />
+                            </div>
+                            <PrimaryButton
+                                disabled={proccessEmail}
+                                onClick={updateEmail}
+                            >
+                                Save New Email
+                            </PrimaryButton>
+
+                            <div>
+                                <PrintErrors errors={errorsPw} />
+                                <div className=" grid grid-cols-2 gap-4">
+                                    <div>
+                                        <InputLabel
+                                            value={"Current Password"}
+                                        />
+                                        <Input
+                                            value={dataPw.current_password}
+                                            className=" w-full"
+                                            type="password"
+                                            onChange={(e) =>
+                                                setDataPw(
+                                                    "current_password",
+                                                    e.target.value
+                                                )
+                                            }
+                                        />
+                                    </div>
+                                    <div>
+                                        <InputLabel value={"New Password"} />
+                                        <Input
+                                            value={dataPw.password}
+                                            className=" w-full"
+                                            type="password"
+                                            onChange={(e) =>
+                                                setDataPw(
+                                                    "password",
+                                                    e.target.value
+                                                )
+                                            }
+                                        />
+                                    </div>
                                 </div>
                                 <div>
-                                    <InputLabel value={"Pw"} />
+                                    <InputLabel value={"Confirm Password"} />
                                     <Input
-                                        value={dataPw.password}
+                                        value={dataPw.confirmpw}
                                         className=" w-full"
+                                        type="password"
+                                        onChange={(e) =>
+                                            setDataPw(
+                                                "confirmpw",
+                                                e.target.value
+                                            )
+                                        }
                                     />
                                 </div>
                             </div>
+                            <PrimaryButton
+                                disabled={proccessPw}
+                                onClick={updatePassword}
+                            >
+                                Save new password
+                            </PrimaryButton>
                         </TabsContent>
                     </Tabs>
                 </CardContent>
@@ -387,15 +497,15 @@ const Home = ({
                         <div className="space-y-3">
                             <div className="flex justify-between items-center">
                                 <span>Messages Sent (MTD)</span>
-                                <span className="font-medium">1,245</span>
+                                <span className="font-medium">0</span>
                             </div>
-                            <div className="flex justify-between items-center">
+                            {/* <div className="flex justify-between items-center">
                                 <span>Avg. Response Rate</span>
-                                <span className="font-medium">12.3%</span>
-                            </div>
+                                <span className="font-medium">0%</span>
+                            </div> */}
                             <div className="flex justify-between items-center">
                                 <span>Active Campaigns</span>
-                                <span className="font-medium">3</span>
+                                <span className="font-medium">0</span>
                             </div>
                         </div>
                     </CardContent>

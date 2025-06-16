@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\AccountSettingsController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RecipientsController;
@@ -53,6 +54,14 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
     Route::post('/template/save-template',[SendMessageController::class,'saveTemplate'])->name('admin.template.save');
+
+    Route::prefix('admin/settings')->group(function () {
+        //Route::resource('accountsettings', AccountSettingsController::class);
+
+        Route::put('email/update', [AccountSettingsController::class,'change_email'])->name('admin.settings.email.update');
+        Route::put('password/update', [AccountSettingsController::class,'change_pw'])->name('admin.settings.password.update');
+        // Other admin routes...
+    });
 
 });
 

@@ -267,8 +267,6 @@ const AnalyticsDashboard = ({
                                 <TableHead>Campaign Name</TableHead>
                                 <TableHead>Date</TableHead>
                                 <TableHead>Recipients</TableHead>
-                                <TableHead>Delivered</TableHead>
-                                <TableHead>Responses</TableHead>
                                 <TableHead>Status</TableHead>
                             </TableRow>
                         </TableHeader>
@@ -280,8 +278,7 @@ const AnalyticsDashboard = ({
                                     </TableCell>
                                     <TableCell>{campaign.date}</TableCell>
                                     <TableCell>{campaign.recipients}</TableCell>
-                                    <TableCell>{campaign.delivered}</TableCell>
-                                    <TableCell>{campaign.responses}</TableCell>
+                                    {/* <TableCell>{campaign.delivered}</TableCell> */}
                                     <TableCell>
                                         <span
                                             className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
