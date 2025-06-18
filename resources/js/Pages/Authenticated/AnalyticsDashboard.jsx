@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import {
     Card,
     CardContent,
@@ -34,78 +34,95 @@ import {
     PieChart,
     Download,
     Calendar,
+    RefreshCcw,
 } from "lucide-react";
 import { Progress } from "@/Components/frontend/ui/progress";
 
-// interface AnalyticsDashboardProps {
-//     campaigns?: Campaign[];
-//     deliveryRate?: number;
-//     responseRate?: number;
-//     engagementRate?: number;
-// }
+import DataTable from "react-data-table-component";
+import PrimaryButton from "@/Components/PrimaryButton";
 
-// interface Campaign {
-//     id: string;
-//     name: string;
-//     date: string;
-//     recipients: number;
-//     delivered: number;
-//     responses: number;
-//     status: "completed" | "scheduled" | "failed";
-// }
+const columns = [
+    {
+        name: "Contact #",
+        selector: (row) => row.payload.phoneNumber,
+        sortable: true,
+    },
+    {
+        name: "Message",
+        selector: (row) => row.payload.message,
+        sortable: true,
+        style: { "white-space": "unset" },
+    },
+];
 
-const AnalyticsDashboard = ({
-    campaigns = [
-        {
-            id: "1",
-            name: "Summer Service Special",
-            date: "2023-06-15",
-            recipients: 1250,
-            delivered: 1230,
-            responses: 187,
-            status: "completed",
-        },
-        {
-            id: "2",
-            name: "Oil Change Reminder",
-            date: "2023-07-01",
-            recipients: 875,
-            delivered: 865,
-            responses: 112,
-            status: "completed",
-        },
-        {
-            id: "3",
-            name: "Fall Maintenance Promo",
-            date: "2023-09-10",
-            recipients: 1500,
-            delivered: 1485,
-            responses: 203,
-            status: "completed",
-        },
-        {
-            id: "4",
-            name: "Holiday Special",
-            date: "2023-12-01",
-            recipients: 2000,
-            delivered: 0,
-            responses: 0,
-            status: "scheduled",
-        },
-        {
-            id: "5",
-            name: "New Year Discount",
-            date: "2024-01-05",
-            recipients: 1800,
-            delivered: 0,
-            responses: 0,
-            status: "scheduled",
-        },
-    ],
-    deliveryRate = 98.7,
-    responseRate = 14.2,
-    engagementRate = 8.5,
-}) => {
+export default function AnalyticsDashboard({
+    deliveryRate = 0, //98.7,
+    responseRate = 0, //14.2,
+    engagementRate = 0, //8.5,
+}) {
+    const [DATA, setDATA] = useState([]);
+    const [isLoading, setIsLoading] = useState(false);
+    async function fetchWebhookData() {
+        setIsLoading(true);
+        try {
+            const response = await fetch(
+                route("admin.settings.webhook.gather")
+            );
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const data = await response.json();
+            const RESP = data.data.map((d) => JSON.parse(d.content));
+            //console.log("Webhook data:", RESP);
+            setDATA(RESP);
+            //return data;
+        } catch (error) {
+            console.error("Failed to fetch webhook data:", error);
+            return null;
+            // Handle error in UI
+        } finally {
+            setIsLoading(false);
+        }
+    }
+    useEffect(() => {
+        fetchWebhookData();
+    }, []);
+
+    // useEffect(() => {
+    //     //await fetchWebhookData();
+    //     const ddata_ = fetchWebhookData();
+    //     const RESP = ddata_.data.map((d) => JSON.parse(d.content));
+    //     setDATA(RESP);
+
+    //     //sortByReceivedAt();
+    // }, []);
+
+    // Sort function
+    // const sortByReceivedAt = () => {
+    //     setDATA((prevData) => {
+    //         // Create a new sorted array (to maintain immutability)
+    //         return [...prevData].sort((a, b) => {
+    //             // Convert receivedAt strings to Date objects for comparison
+    //             const dateA = new Date(a.payload.receivedAt);
+    //             const dateB = new Date(b.payload.receivedAt);
+
+    //             // For ascending order (oldest first)
+    //             return dateA - dateB;
+
+    //             // For descending order (newest first), use:
+    //             // return dateB - dateA;
+    //         });
+    //     });
+    // };
+
+    useEffect(() => {
+        if (DATA) {
+            //console.log("data::::", DATA);
+        }
+    }, [DATA]);
+
     return (
         <div className="bg-background p-6 w-full">
             <div className="flex justify-between items-center mb-6">
@@ -260,8 +277,19 @@ const AnalyticsDashboard = ({
                         Overview of your text blast messages
                     </CardDescription>
                 </CardHeader>
+
                 <CardContent>
-                    <Table>
+                    <div className=" float-right">
+                        <PrimaryButton
+                            disabled={isLoading}
+                            onClick={() => fetchWebhookData()}
+                        >
+                            <RefreshCcw className=" mr-2" />
+                            Refresh
+                        </PrimaryButton>
+                    </div>
+                    <DataTable columns={columns} noWrap={false} data={DATA} />
+                    {/* <Table>
                         <TableHeader>
                             <TableRow>
                                 <TableHead>Campaign Name</TableHead>
@@ -271,7 +299,7 @@ const AnalyticsDashboard = ({
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {/* {campaigns.map((campaign) => (
+                            {campaigns.map((campaign) => (
                                 <TableRow key={campaign.id}>
                                     <TableCell className="font-medium">
                                         {campaign.name}
@@ -296,13 +324,11 @@ const AnalyticsDashboard = ({
                                         </span>
                                     </TableCell>
                                 </TableRow>
-                            ))} */}
+                            ))}
                         </TableBody>
-                    </Table>
+                    </Table> */}
                 </CardContent>
             </Card>
         </div>
     );
-};
-
-export default AnalyticsDashboard;
+}

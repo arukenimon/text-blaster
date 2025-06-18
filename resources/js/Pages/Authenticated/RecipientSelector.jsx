@@ -402,6 +402,14 @@ const RecipientSelector = ({
                 </TabsList>
 
                 <TabsContent value="import" className="mt-4">
+                    <PrimaryButton
+                        className="mb-2"
+                        onClick={() =>
+                            (window.location.href = route("download.template"))
+                        }
+                    >
+                        Download Template
+                    </PrimaryButton>
                     <Card>
                         <CardContent className="pt-6">
                             <div

@@ -9,6 +9,7 @@ import InputLabel from "@/Components/InputLabel";
 import PrimaryButton from "@/Components/PrimaryButton";
 import PrintErrors from "@/Components/PrintErrors";
 import { router, useForm } from "@inertiajs/react";
+import axios from "axios";
 import { useEffect, useState } from "react";
 // import {  } from "@radix-ui/react-tabs";
 
@@ -87,6 +88,29 @@ export default function Configuration({ config, cloudconfig }) {
 
         clearErrors();
     };
+
+    const {
+        data: dataDataWebHook,
+        setData: setDataWebHook,
+        recentlySuccessful: RsuccessDataWebHook,
+        processing: processDataWebHook,
+        errors: errorsDataWebHook,
+        post: postDataWebHook,
+    } = useForm({});
+
+    const setupWebhook = (e) => {
+        e.preventDefault();
+
+        //console.log("resp:", resp);
+        postDataWebHook(route("admin.settings.webhook.setup"), {
+            onFinish: () => {
+                router.reload({
+                    only: ["flash"],
+                });
+            },
+        });
+    };
+
     return (
         <form onSubmit={handleSubmit} className=" xl:w-3/4">
             <Tabs
@@ -163,6 +187,7 @@ export default function Configuration({ config, cloudconfig }) {
             <PrimaryButton className="mt-3" disabled={processing}>
                 Save
             </PrimaryButton>
+            <PrimaryButton onClick={setupWebhook}>Setup Webhook</PrimaryButton>
         </form>
     );
 }

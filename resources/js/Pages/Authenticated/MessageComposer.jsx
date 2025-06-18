@@ -80,14 +80,14 @@ const MessageComposer = ({
 
     useEffect(() => {
         if (selectedTemplate) {
-            setTemplateid(selectedTemplate);
         }
+        setTemplateid(selectedTemplate);
     }, [selectedTemplate]);
 
     useEffect(() => {
         if (templateid) {
-            setSelectedTemplate(templateid);
         }
+        setSelectedTemplate(templateid);
     }, [templateid]);
 
     const [templateName, setTemplateName] = useState("");

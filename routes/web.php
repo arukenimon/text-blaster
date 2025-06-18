@@ -61,8 +61,19 @@ Route::middleware('auth')->group(function () {
         Route::put('email/update', [AccountSettingsController::class,'change_email'])->name('admin.settings.email.update');
         Route::put('password/update', [AccountSettingsController::class,'change_pw'])->name('admin.settings.password.update');
         // Other admin routes...
+
+        Route::post('/registerWebhook',[DashboardController::class,'registerWebHook'])->name('admin.settings.webhook.setup');
+        Route::get('/gatherRequests',[DashboardController::class,'gatherData'])->name('admin.settings.webhook.gather');
     });
 
+    // routes/web.php
+    Route::get('/download-template', function () {
+        $filePath = public_path('downloads/template.xlsx');
+
+        return response()->download($filePath, 'sms_template.xlsx', [
+            'Content-Type' => 'application/vnd.ms-excel',
+        ]);
+    })->name('download.template');
 });
 
 require __DIR__.'/auth.php';

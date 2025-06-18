@@ -80,6 +80,46 @@ class DashboardController extends Controller
             ]
         ]);
     }
+
+    private $unique_id = null;
+    public function registerWebHook(Request $request){
+
+        $this->unique_id = uniqid();
+        $config = config_tables::first();
+        if(!$config){
+            return;
+        }
+        if ($config->webhook_id == null) {
+            $config->update(['webhook_id' => $this->unique_id]);
+        }else{
+            $this->unique_id = $config->webhook_id;
+        }
+
+        $response = Http::withBasicAuth($config->username, $config->password)
+        ->post("http://{$config->localaddress}:8080/webhooks", [
+            'id' => $this->unique_id,
+            'url' => 'https://webhook.site/f600a175-ec87-44e0-93fa-c256785770f2',
+            'event' => 'sms:received'
+        ]);
+
+        return back()->with([
+            'flash' => [
+                'title' => 'Success!',
+                'message' => 'Webhook success!',
+                'icon' => 'success',
+                'response' => $response
+            ]
+        ]);
+    }
+
+
+    public function gatherData(){
+        $response = Http::get('https://webhook.site/token/f600a175-ec87-44e0-93fa-c256785770f2/requests');
+        //$requests = $response->json();
+
+        return $response;
+    }
+
     public function sendmessage(Request $request){
 
 

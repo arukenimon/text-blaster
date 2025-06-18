@@ -324,7 +324,7 @@ const Home = ({
                                                 <strong>Recipients:</strong>{" "}
                                                 {recipients.length} contacts
                                             </p>
-                                            <p>
+                                            {/* <p>
                                                 <strong>Estimated Cost:</strong>
                                                 {" ₱"}
                                                 {recipients
@@ -333,7 +333,7 @@ const Home = ({
                                                           2.5
                                                       ).toFixed(2)
                                                     : 0}
-                                            </p>
+                                            </p> */}
                                         </div>
                                     </div>
                                 </div>
