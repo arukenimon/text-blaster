@@ -133,6 +133,100 @@ class DashboardController extends Controller
         return $response;
     }
 
+
+    private  function sendmssgonline($request){
+
+        $cloudconfig = cloudconfig::first();
+
+        foreach ($request->recipients as $key => $value) {
+            $message_ = str_replace('{{name}}',$value['name'] ?? "", $request->message);
+
+            $response = Http::withBasicAuth($cloudconfig->username, $cloudconfig->password)
+            ->withHeaders([
+                'Content-Type' => 'application/json',
+            ])
+            ->post("https://api.sms-gate.app/3rdparty/v1/message", [
+                'message' => $message_,//$request->message,
+                'phoneNumbers' => [$value['phone']],//$request->phoneNumbers,
+                'simNumber' => 2,
+            ]);
+
+            messages::insert([
+                'fromnum' => '0927',
+                'tonum' => $value['phone'] ?? "",
+                'message' => $message_
+            ]);
+        }
+    }
+
+//     private function sendmssgonline($request) {
+//     $cloudconfig = cloudconfig::first();
+//     $failedRecipients = [];
+
+//     foreach ($request->recipients as $value) {
+//         try {
+//             $message_ = str_replace('{{name}}', $value['name'] ?? '', $request->message);
+//             $phone = $value['phone'] ?? null;
+
+//             if (!$phone) {
+//                 throw new \Exception("Missing phone number");
+//             }
+
+//             // This will automatically wait for response
+//             $response = Http::withBasicAuth($cloudconfig->username, $cloudconfig->password)
+//                 ->withHeaders([
+//                 'Content-Type' => 'application/json',
+//             ])
+//                 ->post("https://api.sms-gate.app/3rdparty/v1/message", [
+//                     'message' => $message_,
+//                     'phoneNumbers' => $phone,
+//                     'simNumber' => 2,
+//                 ]);
+
+//             // Throw if HTTP error occurred
+//             $response->throw();
+
+//             messages::insert([ // Use create() instead of insert() for model events
+//                 'fromnum' => '0927',
+//                 'tonum' => $phone,
+//                 'message' => $message_,
+//                 //'status' => 'sent'
+//             ]);
+
+//         } catch (\Exception $e) {
+//             //Log::error("Failed sending to {$phone}", ['error' => $e->getMessage()]);
+//             $failedRecipients[] = $phone;
+
+//             messages::insert([
+//                 'fromnum' => '0927',
+//                 'tonum' => $phone,
+//                 'message' => $message_ ?? $request->message,
+//                 //'//status' => 'failed',
+//                 //'error' => $e->getMessage()
+//             ]);
+//         }
+//     }
+
+//     return count($failedRecipients) === 0;
+// }
+
+    private function sendmssglocal($request){
+
+        $config = config_tables::first();
+
+         $response = Http::withBasicAuth('mjgwapo', 'ocWFMPKc')
+        ->withHeaders([
+            'Content-Type' => 'application/json',
+        ])
+            ->post("http://{$config->localaddress}:{$config->port}/message", [
+                'message' => $request->message,
+                'phoneNumbers' => $request->phoneNumbers,
+                'simNumber' => 2,
+            ]);
+
+        return $response;
+    }
+
     public function sendmessage(Request $request){
 
 
@@ -149,40 +243,39 @@ class DashboardController extends Controller
         }
 
 
-        $config = config_tables::first();
 
-        $cloudconfig = cloudconfig::first();
+
+
+
+
+        $mode = env('MODE','online');
 
         // FOR LOCAL HOST
-        //  $response = Http::withBasicAuth('mjgwapo', 'ocWFMPKc')
-        // ->withHeaders([
-        //     'Content-Type' => 'application/json',
-        // ])
-        //     ->post("http://{$config->localaddress}:{$config->port}/message", [
-        //         'message' => $request->message,
-        //         'phoneNumbers' => $request->phoneNumbers,
-        //         'simNumber' => 2,
-        //     ]);
 
-         $response = Http::withBasicAuth($cloudconfig->username, $cloudconfig->password)
-        ->withHeaders([
-            'Content-Type' => 'application/json',
-        ])
-        ->post("https://api.sms-gate.app/3rdparty/v1/message", [
-            'message' => $request->message,
-            'phoneNumbers' => $request->phoneNumbers,
-            'simNumber' => 2,
-        ]);
+
+        /*
+            I have data like this
+
+
+
+
+            request: {
+                phoneNumbers: [......]
+            }
+        */
+
+
 
         try{
             DB::beginTransaction();
-            foreach ($request->phoneNumbers as $phoneNum){
-                messages::insert([
-                    'fromnum' => '0927',
-                    'tonum' => $phoneNum,
-                    'message' => $request->message
-                ]);
-            }
+            $this->sendmssgonline($request);
+
+            // if($mode == 'online'){
+            //     $this->sendmssgonline($request);
+            // }else{
+            //     //$response = $this->sendmssglocal($request);
+            // }
+
             DB::commit();
         }
         catch(\Exception $er){
@@ -202,7 +295,7 @@ class DashboardController extends Controller
                     'title' => 'Success!',
                     'message' => 'Message has been successfully sent!',
                     'icon' => 'success',
-                    'response' => $response
+                    'response' => $response ?? null
                 ]
             ]);
     }

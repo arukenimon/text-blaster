@@ -111,6 +111,7 @@ const Home = ({
             const response = await axios.post("/services/send-sms", {
                 message: message,
                 phoneNumbers: recipients.map((r) => r.phone), //["+639273630590"],
+                recipients: recipients,
             });
             if (response.data.flash) {
                 const { icon, message, title } = response.data.flash;
