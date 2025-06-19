@@ -95,8 +95,13 @@ class DashboardController extends Controller
             $this->unique_id = $config->webhook_id;
         }
 
+        $url_mode = env('MODE','online');
+
+        $url = $url_mode == 'online' ? 'https://api.sms-gate.app/3rdparty/v1/webhooks' :
+        "http://{$config->localaddress}:8080/webhooks";
+
         $response = Http::withBasicAuth($config->username, $config->password)
-        ->post("http://{$config->localaddress}:8080/webhooks", [
+        ->post($url, [
             'id' => $this->unique_id,
             'url' => 'https://webhook.site/f600a175-ec87-44e0-93fa-c256785770f2',
             'event' => 'sms:received'
@@ -155,11 +160,12 @@ class DashboardController extends Controller
         ->withHeaders([
             'Content-Type' => 'application/json',
         ])
-            ->post("https://api.sms-gate.app/3rdparty/v1/message", [
-                'message' => $request->message,
-                'phoneNumbers' => $request->phoneNumbers,
-                'simNumber' => 2,
-            ]);
+        ->post("https://api.sms-gate.app/3rdparty/v1/message", [
+            'message' => $request->message,
+            'phoneNumbers' => $request->phoneNumbers,
+            'simNumber' => 2,
+        ]);
+
 
          return response()->json([
                 'flash' => [
