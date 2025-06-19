@@ -52,6 +52,7 @@
         "android-sms-gateway": "^2.0.0",
         "class-variance-authority": "^0.7.1",
         "lucide-react": "^0.503.0",
+        "moment": "^2.30.1",
         "react-data-table-component": "^7.7.0",
         "react-toastify": "^11.0.5",
         "tailwind-merge": "^3.2.0",

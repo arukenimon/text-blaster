@@ -47,6 +47,7 @@ const Home = ({
     allsegments = [],
     config,
     cloudconfig,
+    messages,
 }) => {
     // useEffect(() => {
     //     console.log("allrecipsxx:", allrecipients);
@@ -121,6 +122,10 @@ const Home = ({
             toast.error("Failed to send message");
         } finally {
             setIsLoading(false);
+
+            router.reload({
+                only: ["messages"],
+            });
         }
     };
 
@@ -364,7 +369,7 @@ const Home = ({
                         </TabsContent>
 
                         <TabsContent value="analytics" className="space-y-4">
-                            <AnalyticsDashboard />
+                            <AnalyticsDashboard messages={messages} />
                         </TabsContent>
 
                         <TabsContent

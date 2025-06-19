@@ -6,9 +6,11 @@ use App\Http\Controllers\Controller;
 use App\Models\cloudconfig;
 use App\Models\config_tables;
 use App\Models\contacts;
+use App\Models\messages;
 use App\Models\segments;
 use App\Models\templates;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 
 use Inertia\Inertia;
@@ -23,6 +25,7 @@ class DashboardController extends Controller
 
     public function index(){
         return Inertia::render('Authenticated/home',[
+            'messages' => messages::get(),
             'config' => config_tables::get()[0] ?? [],
             'cloudconfig' => cloudconfig::get()[0] ?? [],
             'templates' => templates::get(),
@@ -165,6 +168,28 @@ class DashboardController extends Controller
             'phoneNumbers' => $request->phoneNumbers,
             'simNumber' => 2,
         ]);
+
+        try{
+            DB::beginTransaction();
+            foreach ($request->phoneNumbers as $phoneNum){
+                messages::insert([
+                    'fromnum' => '0927',
+                    'tonum' => $phoneNum,
+                    'message' => $request->message
+                ]);
+            }
+            DB::commit();
+        }
+        catch(\Exception $er){
+            DB::rollBack();
+            return response()->json([
+                'flash' => [
+                    'title' => 'Error!',
+                    'message' => 'Error occured: ' . $er->getMessage(),
+                    'icon' => 'error'
+                ]
+            ]);
+        }
 
 
          return response()->json([

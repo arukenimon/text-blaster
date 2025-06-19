@@ -41,17 +41,32 @@ import { Progress } from "@/Components/frontend/ui/progress";
 import DataTable from "react-data-table-component";
 import PrimaryButton from "@/Components/PrimaryButton";
 
+import moment from "moment";
+import { router } from "@inertiajs/react";
 const columns = [
     {
-        name: "Contact #",
-        selector: (row) => row.payload.phoneNumber,
+        name: "From",
+        selector: (row) => row.fromnum,
+        sortable: true,
+    },
+    {
+        name: "To",
+        selector: (row) => row.tonum,
         sortable: true,
     },
     {
         name: "Message",
-        selector: (row) => row.payload.message,
+        selector: (row) => row.message,
         sortable: true,
         style: { "white-space": "unset" },
+    },
+    {
+        name: "Date",
+        selector: (row) =>
+            moment(row.created_at, "YYYY-MM-DD HH:mm:ss").format(
+                "MMM Do YYYY, h:mm a"
+            ),
+        sortable: true,
     },
 ];
 
@@ -59,24 +74,29 @@ export default function AnalyticsDashboard({
     deliveryRate = 0, //98.7,
     responseRate = 0, //14.2,
     engagementRate = 0, //8.5,
+
+    messages,
 }) {
     const [DATA, setDATA] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
     async function fetchWebhookData() {
         setIsLoading(true);
         try {
-            const response = await fetch(
-                route("admin.settings.webhook.gather")
-            );
+            router.reload({
+                only: ["messages"],
+            });
+            // const response = await fetch(
+            //     route("admin.settings.webhook.gather")
+            // );
 
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
+            // if (!response.ok) {
+            //     throw new Error(`HTTP error! status: ${response.status}`);
+            // }
 
-            const data = await response.json();
-            const RESP = data.data.map((d) => JSON.parse(d.content));
-            //console.log("Webhook data:", RESP);
-            setDATA(RESP);
+            // const data = await response.json();
+            // const RESP = data.data.map((d) => JSON.parse(d.content));
+            // //console.log("Webhook data:", RESP);
+            // setDATA(RESP);
             //return data;
         } catch (error) {
             console.error("Failed to fetch webhook data:", error);
@@ -89,33 +109,6 @@ export default function AnalyticsDashboard({
     useEffect(() => {
         fetchWebhookData();
     }, []);
-
-    // useEffect(() => {
-    //     //await fetchWebhookData();
-    //     const ddata_ = fetchWebhookData();
-    //     const RESP = ddata_.data.map((d) => JSON.parse(d.content));
-    //     setDATA(RESP);
-
-    //     //sortByReceivedAt();
-    // }, []);
-
-    // Sort function
-    // const sortByReceivedAt = () => {
-    //     setDATA((prevData) => {
-    //         // Create a new sorted array (to maintain immutability)
-    //         return [...prevData].sort((a, b) => {
-    //             // Convert receivedAt strings to Date objects for comparison
-    //             const dateA = new Date(a.payload.receivedAt);
-    //             const dateB = new Date(b.payload.receivedAt);
-
-    //             // For ascending order (oldest first)
-    //             return dateA - dateB;
-
-    //             // For descending order (newest first), use:
-    //             // return dateB - dateA;
-    //         });
-    //     });
-    // };
 
     useEffect(() => {
         if (DATA) {
@@ -282,13 +275,20 @@ export default function AnalyticsDashboard({
                     <div className=" float-right">
                         <PrimaryButton
                             disabled={isLoading}
-                            onClick={() => fetchWebhookData()}
+                            onClick={(e) => {
+                                e.preventDefault();
+                                fetchWebhookData();
+                            }}
                         >
                             <RefreshCcw className=" mr-2" />
                             Refresh
                         </PrimaryButton>
                     </div>
-                    <DataTable columns={columns} noWrap={false} data={DATA} />
+                    <DataTable
+                        columns={columns}
+                        noWrap={false}
+                        data={messages}
+                    />
                     {/* <Table>
                         <TableHeader>
                             <TableRow>
