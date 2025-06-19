@@ -12,7 +12,7 @@ use App\Models\templates;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
-
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 class DashboardController extends Controller
 {
@@ -50,6 +50,10 @@ class DashboardController extends Controller
             'user' => "required",
             'pw' => "required",
 
+            'simslot' => [
+                'required_if:type,local',
+                Rule::when($request->type == 'local','in:1,2')
+            ],
 
         ]);
 
@@ -62,6 +66,7 @@ class DashboardController extends Controller
                 "port"=> $request->port,
                 "username"=> $request->user,
                 "password"=> $request->pw,
+                "simslot" => $request->simslot,
             ]);
         }else{
             cloudconfig::updateOrInsert(

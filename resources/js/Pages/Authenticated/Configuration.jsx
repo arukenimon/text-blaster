@@ -45,6 +45,8 @@ export default function Configuration({ config, cloudconfig }) {
                 ? cloudconfig?.password ?? ""
                 : "",
         type: activeTab,
+
+        simslot: activeTab == "local" ? config?.simslot : "",
     });
 
     useEffect(() => {
@@ -63,6 +65,8 @@ export default function Configuration({ config, cloudconfig }) {
                     ? cloudconfig?.password ?? ""
                     : "",
             type: activeTab == "local" ? "local" : "cloud",
+
+            simslot: activeTab == "local" ? config?.simslot : "",
         });
     }, [activeTab]);
 
@@ -125,7 +129,7 @@ export default function Configuration({ config, cloudconfig }) {
 
                 <TabsContent value="local">
                     <PrintErrors errors={errors} />
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-2">
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mt-2">
                         <div>
                             <InputLabel value="Local Address" />
                             <Input
@@ -142,6 +146,18 @@ export default function Configuration({ config, cloudconfig }) {
                                 onChange={handleChange}
                             />
                         </div>
+                        <div>
+                            <InputLabel value="Sim Slot" />
+                            <Input
+                                type="number"
+                                step="1"
+                                value={data.simslot}
+                                name="simslot"
+                                onChange={handleChange}
+                            />
+                        </div>
+                    </div>
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-2">
                         <div>
                             <InputLabel value="Username" />
                             <Input
