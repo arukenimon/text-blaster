@@ -502,7 +502,9 @@ const Home = ({
                         <div className="space-y-3">
                             <div className="flex justify-between items-center">
                                 <span>Messages Sent (MTD)</span>
-                                <span className="font-medium">0</span>
+                                <span className="font-medium">
+                                    {messages.length}
+                                </span>
                             </div>
                             {/* <div className="flex justify-between items-center">
                                 <span>Avg. Response Rate</span>

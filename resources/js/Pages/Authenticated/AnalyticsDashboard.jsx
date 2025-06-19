@@ -157,7 +157,8 @@ export default function AnalyticsDashboard({
                     <CardContent>
                         <Progress value={deliveryRate} className="h-2" />
                         <p className="text-xs text-muted-foreground mt-2">
-                            Messages successfully delivered to recipients
+                            Messages successfully delivered to recipients (This
+                            month)
                         </p>
                     </CardContent>
                 </Card>
