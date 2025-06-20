@@ -157,6 +157,8 @@ class DashboardController extends Controller
                 'message' => $message_
             ]);
         }
+
+        return $response;
     }
 
 //     private function sendmssgonline($request) {
@@ -268,7 +270,7 @@ class DashboardController extends Controller
 
         try{
             DB::beginTransaction();
-            $this->sendmssgonline($request);
+            $response = $this->sendmssgonline($request);
 
             // if($mode == 'online'){
             //     $this->sendmssgonline($request);
