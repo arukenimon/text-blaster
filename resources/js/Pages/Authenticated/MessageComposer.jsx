@@ -264,16 +264,11 @@ const MessageComposer = ({
                             <div className="flex justify-between items-center">
                                 <Label htmlFor="message">Message</Label>
                                 <div className="flex items-center space-x-2">
-                                    <span
-                                        className={`text-xs ${
-                                            isOverLimit
-                                                ? "text-red-500"
-                                                : "text-gray-500"
-                                        }`}
-                                    >
-                                        {characterCount}/{maxCharacters}
+                                    <span className={`text-xs text-gray-500`}>
+                                        {characterCount}
+                                        {/* /{maxCharacters} */}
                                     </span>
-                                    {isOverLimit && (
+                                    {/* {isOverLimit && (
                                         <TooltipProvider>
                                             <Tooltip>
                                                 <TooltipTrigger>
@@ -287,7 +282,7 @@ const MessageComposer = ({
                                                 </TooltipContent>
                                             </Tooltip>
                                         </TooltipProvider>
-                                    )}
+                                    )} */}
                                 </div>
                             </div>
                             <Textarea
