@@ -138,6 +138,8 @@ class DashboardController extends Controller
 
         $cloudconfig = cloudconfig::first();
 
+        $config = config_tables::first();
+
         foreach ($request->recipients as $key => $value) {
             $message_ = str_replace('{{name}}',$value['name'] ?? "", $request->message);
 
@@ -148,7 +150,7 @@ class DashboardController extends Controller
             ->post("https://api.sms-gate.app/3rdparty/v1/message", [
                 'message' => $message_,//$request->message,
                 'phoneNumbers' => [$value['phone']],//$request->phoneNumbers,
-                'simNumber' => 2,
+                'simNumber' => $config->simslot,
             ]);
 
             messages::insert([
