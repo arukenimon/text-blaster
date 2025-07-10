@@ -389,7 +389,9 @@ const MessageComposer = ({
                 </div>
 
                 <Button
-                    onClick={onNext}
+                    onClick={() =>
+                        router.visit(route("admin.recipients.index"))
+                    }
                     // disabled={message.trim() === "" || isOverLimit}
                     className="flex items-center"
                 >

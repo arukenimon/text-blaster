@@ -1,7 +1,13 @@
 <?php
 
 use App\Http\Controllers\Admin\AccountSettingsController;
+use App\Http\Controllers\Admin\AnalyticsController;
+use App\Http\Controllers\Admin\CampaignsController;
+use App\Http\Controllers\Admin\ComposeController;
+use App\Http\Controllers\Admin\ConfigurationController;
 use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\RecipientController;
+use App\Http\Controllers\Admin\ScheduleController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RecipientsController;
 use App\Http\Controllers\SendMessageController;
@@ -41,11 +47,21 @@ Route::middleware(['auth', 'verified'])->group(function () {
 });
 
 Route::middleware('auth')->group(function(){
-    Route::get('/recipients',[RecipientsController::class,'index'])->name('admin.recipients');
+    Route::get('/recipient',[RecipientsController::class,'index'])->name('admin.recipients');
 
     Route::post('/recipients/add-contacts',[RecipientsController::class,'storeNewContacts'])->name('admin.contacts.add');
     Route::post('/to-recipients-send',[SendMessageController::class,'sendTestSms'])->name('admin.message.send');
 
+    Route::get('/campaigns',[CampaignsController::class,'index'])->name('admin.campaigns.index');
+
+
+
+    Route::get('/recipients',[RecipientController::class,'index'])->name('admin.recipients.index');
+    Route::get('/compose',[ComposeController::class,'index'])->name('admin.compose.index');
+    Route::get('/schedule',[ScheduleController::class,'index'])->name('admin.schedule.index');
+    Route::get('/analytics',[AnalyticsController::class,'index'])->name('admin.analytics.index');
+    Route::get('/configuration',[ConfigurationController::class,'index'])->name('admin.configuration.index');
+    Route::get('/settings/account',[AccountSettingsController::class,'index'])->name('admin.accsettings.index');
 });
 
 Route::middleware('auth')->group(function () {

@@ -12,6 +12,7 @@ class RecipientsController extends Controller
 {
     //
 
+
     public function index(){
         return Inertia::render('Authenticated/RecipientSelector',[]);
     }

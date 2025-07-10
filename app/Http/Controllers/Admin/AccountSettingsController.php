@@ -6,11 +6,15 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Inertia\Inertia;
 
 class AccountSettingsController extends Controller
 {
     //
+    public function index(){
 
+        return Inertia::render("Authenticated/AccountSettings");
+    }
     public function change_pw(Request $request){
         $request->validate([
             'current_password' => "required|current_password",

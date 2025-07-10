@@ -24,20 +24,27 @@ class DashboardController extends Controller
     }
 
     public function index(){
-        return Inertia::render('Authenticated/home',[
-            'messages' => messages::get(),
-            'config' => config_tables::get()[0] ?? [],
-            'cloudconfig' => cloudconfig::get()[0] ?? [],
-            'templates' => templates::get(),
-            'allrecipients' => contacts::with(['segment'])->get(),
-            'allsegments' => segments::all()->map(function($segment){
-                return [
-                    'ID' => $segment->id,
-                    'id' => $segment->segment,
-                    'label' => $segment->description,
-                    'count' => $segment->contacts->count()
-                ];
-            })//segments::get(), // I want the COLUMN name return to id, 'segment' return to label,
+        // return Inertia::render('Authenticated/home',[
+        //     'messages' => messages::get(),
+        //     'config' => config_tables::get()[0] ?? [],
+        //     'cloudconfig' => cloudconfig::get()[0] ?? [],
+        //     'templates' => templates::get(),
+        //     'allrecipients' => contacts::with(['segment'])->get(),
+        //     'allsegments' => segments::all()->map(function($segment){
+        //         return [
+        //             'ID' => $segment->id,
+        //             'id' => $segment->segment,
+        //             'label' => $segment->description,
+        //             'count' => $segment->contacts->count()
+        //         ];
+        //     })//segments::get(), // I want the COLUMN name return to id, 'segment' return to label,
+        // ]);
+
+        return Inertia::render('Authenticated/Compose',[
+
+
+
+            //segments::get(), // I want the COLUMN name return to id, 'segment' return to label,
         ]);
     }
 

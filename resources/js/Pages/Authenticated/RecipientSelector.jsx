@@ -55,6 +55,7 @@ import DataTable from "react-data-table-component";
 import PrimaryButton from "@/Components/PrimaryButton";
 import DangerButton from "@/Components/DangerButton";
 import CustomModal from "@/Components/CustomModal";
+
 export const useRecipientStore = create((set) => ({
     recipients: [],
     setRecipients: (recipients) => set({ recipients }),
@@ -741,7 +742,9 @@ const RecipientSelector = ({
                                 Back to Message
                             </Button>
                             <Button
-                                onClick={() => onNext(recipients)}
+                                onClick={() =>
+                                    router.visit(route("admin.schedule.index"))
+                                }
                                 disabled={recipients.length === 0}
                                 className="flex items-center gap-2"
                             >
